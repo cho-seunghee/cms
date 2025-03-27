@@ -1,0 +1,35 @@
+.searchSection {
+  display: flex;
+  justify-content: space-between; /* 좌측 필터와 우측 버튼 분리 */
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+  background-color: #fff;
+  padding: 14px;
+}
+
+.formGroupContainer {
+  display: flex;
+  gap: 10px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.formGroup label {
+  margin-bottom: 0;
+  margin-right: 5px; /* 라벨과 입력 필드 사이 간격 추가 */
+}
+
+.formGroup input,
+.formGroup select {
+  padding: 5px;
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 10px; /* 버튼 사이 간격 유지 */
+}

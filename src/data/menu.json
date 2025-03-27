@@ -1,0 +1,26 @@
+[
+    { "name": "Home", "path": "/main" },
+    {
+      "name": "A메뉴",
+      "children": [
+        { "name": "testPage11", "path": "/main/testPage11" },
+        { "name": "testPage12", "path": "/main/testPage12" },
+        { "name": "testPage13", "path": "/main/testPage13" }
+      ]
+    },
+    {
+      "name": "B메뉴",
+      "children": [
+        { "name": "testPage21", "path": "/main/testPage21" },
+        { "name": "testPage22", "path": "/main/testPage22" },
+        { "name": "testPage23", "path": "/main/testPage23" },
+        { "name": "testPage24", "path": "/main/testPage24" }
+      ]
+    },
+    { "name": "TestPage1", "path": "/main/testPage1" },
+    { "name": "TestPage2", "path": "/main/testPage2" },
+    { "name": "TestPage3", "path": "/main/testPage3" },
+    { "name": "TestPage4", "path": "/main/testPage4" },
+    { "name": "TabulatorDirect", "path": "/main/tabulatorDirect" }
+  ]
+  
