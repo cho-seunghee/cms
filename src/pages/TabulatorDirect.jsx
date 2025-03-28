@@ -60,7 +60,7 @@ const TabulatorDirect = () => {
   const tableRef = useRef(null);
   const tableInstance = useRef(null);
   const isInitialRender = useRef(true);
-  const dataUrl = "/data.json";
+  const dataUrl = "/cms/data.json";
 
   const cols = [
     { title: "ID", field: "id", width: 80 },
