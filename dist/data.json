@@ -1,0 +1,5 @@
+[
+    { "id": 1, "name": "홍길동", "age": 25, "status": "active" },
+    { "id": 2, "name": "김영희", "age": 30, "status": "inactive" },
+    { "id": 3, "name": "이철수", "age": 35, "status": "active" }
+  ]
