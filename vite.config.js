@@ -9,4 +9,5 @@ export default defineConfig({
       localsConvention: 'camelCase', // 선택적: 클래스 이름을 camelCase로 변환
     },
   },
+  base: '/cms/',
 })
