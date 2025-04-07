@@ -1,5 +1,5 @@
 import React from 'react';
-import { handleInputChange } from '../utils/tableEvent';
+import { handleInputChange } from '../../utils/tableEvent';
 import styles from './TableSearch.module.css';
 
 const TableSearch = ({ filterFields, filters, setFilters, onDownloadExcel }) => {

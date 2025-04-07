@@ -1,17 +1,44 @@
 import React, { useEffect, useContext } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
-import { UserContext } from '../App';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { UserContext } from '../../App';
 import MainHeader from './MainHeader';
 import MainTopNav from './MainTopNav';
 import MainFooter from './MainFooter';
+import MainHome from './MainHome';
+import { fetchData } from '../../utils/dataUtils';
+import utils from '../../utils/utils'
+import axios from 'axios';
 import styles from './MainLayout.module.css';
 
 const MainLayout = () => {
-  const context = useContext(UserContext);
-  const user = context ? context.user : null;
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useContext(UserContext);
 
-  console.log(user);
+  // const context = useContext(UserContext);
+  // const user = context ? context.user : null;
+
+  // if (!user) {
+  //   console .log("No user found");
+  //  }
+
+  useEffect(() => {
+    if (!user) navigate('/');
+    else {
+      if(!user.username == "관리자2")
+      {
+        fetchData(axios, `${utils.getServerUrl('permissions/list')}`, { userid: user.userid }, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        }).then(data => {
+          if(!data)
+          {
+            console.log('No Permissions found');
+          }
+          
+        });  
+      }
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     const handleScroll = (e) => {
@@ -53,8 +80,6 @@ const MainLayout = () => {
     };
   }, [navigate]);
 
-  console.log('UserContext in MainLayout:', context); // 컨텍스트 값 확인
-
   return (
     <div className={styles.main}>
       <header id="header">
@@ -66,7 +91,8 @@ const MainLayout = () => {
         </div>
       </header>
       <section className={styles.main}>
-        <Outlet />
+      {location.pathname === '/main' && <MainHome />} {/* /main 경로에서만 MainHome 렌더링 */}
+        <Outlet /> {/* 하위 라우트는 MainHome 내부에서 처리 */}
       </section>
       <footer id="footer">
         <MainFooter />

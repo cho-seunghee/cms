@@ -105,7 +105,6 @@ var ajaxSuccess = function (json) {
         if (item.SERVICE_ERROR_CD != undefined) errCd = item.SERVICE_ERROR_CD;
         if (item.SERVICE_ERROR_MSG != undefined) errMsg = item.SERVICE_ERROR_MSG;
         if (item.SERVICE_ERROR_REDIRECT != undefined) errRedirect = item.SERVICE_ERROR_REDIRECT;
-        //console.log(item.SERVICE_ERROR_CD);
         return false;
     });
 

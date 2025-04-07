@@ -1,6 +1,6 @@
 import React from 'react';
 import MenuItem from './MenuItem';
-import menuData from '../data/menu.json';
+import menuData from '../../data/menu.json';
 import styles from './MainLayout.module.css';
 
 const MainTopNav = () => {

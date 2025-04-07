@@ -31,5 +31,22 @@ export default {
         (Array.isArray(value) && value.length === 0) ||
         (typeof value === 'object' && Object.keys(value).length === 0)
       );
+    },
+
+    getClientUrl(arg){
+      let url = import.meta.env.VITE_CLIENT_URL || window.location.origin;
+      url += `/${arg}`;
+      return url;
+    },
+
+    getServerUrl(arg){
+      let url = import.meta.env.VITE_SERVER_API_URL || window.location.origin;
+      url += `/${arg}`;
+      return url;
+    },
+    
+    getClientIp() {
+      // 임시로 고정 IP 반환 (실제로는 백엔드 API 호출 필요)
+      return '192.168.1.1';
     }
   };

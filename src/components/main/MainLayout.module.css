@@ -1,12 +1,12 @@
 /* CSS 변수 정의 */
 :root {
-  --primary-color: #317271;         /* 메인 색상 */
-  --secondary-color: #c1cac5;       /* 보조 색상 */
-  --header-nav-bg: #2cbbb7;         /* 헤더 내비게이션 배경 */
-  --text-color: #6b7770;            /* 텍스트 색상 */
-  --link-color: #ffffff;            /* 링크 색상 */
-  --white: #fff;                    /* 흰색 */
-  --transition-duration: 0.15s;     /* 전환 시간 */
+  --primary-color: #317271; /* 메인 색상 */
+  --secondary-color: #c1cac5; /* 보조 색상 */
+  --header-nav-bg: #2cbbb7; /* 헤더 내비게이션 배경 */
+  --text-color: #6b7770; /* 텍스트 색상 */
+  --link-color: #ffffff; /* 링크 색상 */
+  --white: #fff; /* 흰색 */
+  --transition-duration: 0.15s; /* 전환 시간 */
   --transition-easing: ease-in-out; /* 전환 효과 */
 }
 
@@ -64,9 +64,7 @@
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
   outline: 0;
-  transition: 
-    background-color 0.075s var(--transition-easing),
-    color 0.075s var(--transition-easing);
+  transition: background-color 0.075s var(--transition-easing), color 0.075s var(--transition-easing);
 }
 
 .nav li:hover,
@@ -227,7 +225,6 @@
 }
 
 .footerContent {
-  max-width: 1200px;
   margin: 0 auto;
 }
 

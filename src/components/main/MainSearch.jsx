@@ -1,5 +1,5 @@
 import React from 'react';
-import { handleInputChange, handleKeyUp } from '../utils/tableEvent';
+import { handleInputChange, handleKeyUp } from '../../utils/tableEvent';
 import styles from './MainSearch.module.css';
 
 const MainSearch = ({ filterFields, filters, setFilters, onSearch, onReset }) => {

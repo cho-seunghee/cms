@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import { UserContext } from "../App";
+import { UserContext } from "../../App";
 import styles from './MainLayout.module.css';
 
 const MainHeader = () => {
@@ -19,7 +19,7 @@ const MainHeader = () => {
   const handleLogoutClick = () => {
     setLogout(true); // 로그아웃 상태 변경
     if (context && context.setUser) {
-      context.setUser({ username: "", userId: "", ip: "" }); // 사용자 정보 초기화
+      context.setUser({ username: "", userid: "", ip: "" }); // 사용자 정보 초기화
     }
     navigate('/'); // 루트로 이동
   };
@@ -34,7 +34,7 @@ const MainHeader = () => {
               <li>{user.username} 님 안녕하세요.</li>
             </ul>
             <ul>
-              <li>ID ({user.userId})</li>
+              <li>ID ({user.userid})</li>
             </ul>
             <ul>
               <li>IP ({user.ip})</li>

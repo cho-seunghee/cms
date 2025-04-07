@@ -1,0 +1,15 @@
+.boardTitle {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5)
+}
+
+.contentLeftContainer {
+  padding-right: 20px;
+}
+
+.contentRightContainer {
+  padding-left: 20px;
+}
+
+.swiper-button-prev, .swiper-button-next {
+  color: #000;
+}
