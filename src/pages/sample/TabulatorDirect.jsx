@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import apiClient from "../services/apiClient";
-import { fetchData } from "../utils/dataUtils";
-import { createTable } from "../utils/tableConfig";
-import { initialFilters, handleReset } from "../utils/tableEvent";
-import { handleDownloadExcel } from "../utils/tableExcel"; // 엑셀 다운로드 함수 임포트
-import MainSearch from "../components/main/MainSearch";
-import TableSearch from "../components/table/TableSearch";
+import apiClient from "../../services/apiClient";
+import { fetchDataGet } from "../../utils/dataUtils";
+import { createTable } from "../../utils/tableConfig";
+import { initialFilters, handleReset } from "../../utils/tableEvent";
+import { handleDownloadExcel } from "../../utils/tableExcel"; // 엑셀 다운로드 함수 임포트
+import MainSearch from "../../components/main/MainSearch";
+import TableSearch from "../../components/table/TableSearch";
 import styles from "./TabulatorDirect.module.css";
+import common from "../../utils/common";
 import "tabulator-tables/dist/css/tabulator.min.css";
 
 const TabulatorDirect = () => {
@@ -63,7 +64,7 @@ const TabulatorDirect = () => {
   const tableRef = useRef(null); // 테이블 DOM 참조
   const tableInstance = useRef(null); // Tabulator 인스턴스 참조
   const isInitialRender = useRef(true); // 초기 렌더링 플래그
-  const dataUrl = "/cms/data.json"; // 데이터 요청 URL
+  const dataUrl = `${common.getClientUrl("data.json")}`; // 데이터 요청 URL
 
   // 테이블 컬럼 정의
   const cols = [
@@ -80,7 +81,7 @@ const TabulatorDirect = () => {
     setError(null); // 에러 초기화
 
     try {
-      const jsonData = await fetchData(apiClient, dataUrl, filters); // 데이터 요청
+      const jsonData = await fetchDataGet(apiClient, dataUrl, filters); // 데이터 요청
       setData(jsonData || []); // 데이터 설정, 없으면 빈 배열
     } catch (err) {
       setData([]); // 에러 시 데이터 초기화
@@ -93,7 +94,6 @@ const TabulatorDirect = () => {
   // 테이블 초기화 useEffect
   useEffect(() => {
     if (!tableRef.current) {
-      console.error("tableRef.current is not initialized");
       setError("테이블 컨테이너가 준비되지 않았습니다.");
       return;
     }
@@ -104,10 +104,8 @@ const TabulatorDirect = () => {
       if (!tableInstance.current) {
         throw new Error("createTable returned undefined or null");
       }
-      console.log("Table initialized:", tableInstance.current);
       setTableStatus("ready"); // 테이블 상태를 "ready"로 설정
     } catch (err) {
-      console.error("Error creating table:", err);
       setTableStatus("error"); // 실패 시 "error" 상태
       setError("테이블 초기화 실패: " + err.message);
     }

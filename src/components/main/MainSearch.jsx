@@ -19,7 +19,7 @@ const MainSearch = ({ filterFields, filters, setFilters, onSearch, onReset }) =>
                 onChange={(e) => handleInputChange(e, setFilters)}
                 onKeyUp={(e) => handleKeyUp(e, onSearch)}
                 style={{
-                  width: field.width || 'auto', // 동적 크기 적용
+                  width: field.width || 'auto',
                   height: field.height || 'auto',
                 }}
               />
@@ -30,7 +30,7 @@ const MainSearch = ({ filterFields, filters, setFilters, onSearch, onReset }) =>
                 value={filters[field.id] || ''}
                 onChange={(e) => handleInputChange(e, setFilters)}
                 style={{
-                  width: field.width || 'auto', // 동적 크기 적용
+                  width: field.width || 'auto',
                   height: field.height || 'auto',
                 }}
               >

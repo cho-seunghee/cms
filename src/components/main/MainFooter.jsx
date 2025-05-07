@@ -1,6 +1,5 @@
-// components/MainFooter.jsx
 import React from 'react';
-import styles from './MainLayout.module.css'; // MainLayout.module.css 재사용
+import styles from './MainLayout.module.css';
 
 const MainFooter = () => {
   return (

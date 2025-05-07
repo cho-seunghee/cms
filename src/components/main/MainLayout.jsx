@@ -1,47 +1,89 @@
-import React, { useEffect, useContext } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { UserContext } from '../../App';
+import React, { useEffect, useState, Suspense } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 import MainHeader from './MainHeader';
 import MainTopNav from './MainTopNav';
+import MainTopNavLoc from './MainTopNavLoc';
 import MainFooter from './MainFooter';
-import MainHome from './MainHome';
+import useStore from '../../store/store';
 import { fetchData } from '../../utils/dataUtils';
-import utils from '../../utils/utils'
-import axios from 'axios';
+import common from '../../utils/common';
+import api from '../../utils/api.js';
+import menuData from '../../data/menu.json';
 import styles from './MainLayout.module.css';
 
 const MainLayout = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { user } = useContext(UserContext);
+  const { user, clearUser, setMenu, menu } = useStore();
+  const [isChecking, setIsChecking] = useState(true);
 
-  // const context = useContext(UserContext);
-  // const user = context ? context.user : null;
+  const checkTokenValidity = async () => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      clearUser();
+      return false;
+    }
+    return true;
+  };
 
-  // if (!user) {
-  //   console .log("No user found");
-  //  }
+  const handleLogoClick = async (e) => {
+    e.preventDefault();
+    const isValid = await checkTokenValidity();
+    if (!isValid) {
+      navigate('/', { replace: true });
+      return;
+    }
+    navigate('/main');
+  };
 
   useEffect(() => {
-    if (!user) navigate('/');
-    else {
-      if(!user.username == "관리자2")
-      {
-        fetchData(axios, `${utils.getServerUrl('permissions/list')}`, { userid: user.userid }, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }).then(data => {
-          if(!data)
-          {
-            console.log('No Permissions found');
-          }
-          
-        });  
+    const fetchMenu = async () => {
+      if (menu) {
+        return;
       }
-    }
+
+      try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetchData(
+          api,
+          common.getServerUrl('auth/menu'),
+          { userId: user.empNo },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.success && response.data && response.data.length > 0) {
+          setMenu(response.data);
+        } else {
+          setMenu(menuData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch menu:', error);
+        setMenu(menuData);
+      }
+    };
+
+    fetchMenu();
+  }, [setMenu, menu, user]);
+
+  useEffect(() => {
+    const verifyUser = async () => {
+      const isValid = await checkTokenValidity();
+      if (!isValid && user) {
+        navigate('/', { replace: true });
+      }
+      setIsChecking(false);
+    };
+    verifyUser();
   }, [user, navigate]);
 
   useEffect(() => {
-    const handleScroll = (e) => {
+    const handleClick = async (e) => {
+      const isValid = await checkTokenValidity();
+      if (!isValid) {
+        e.preventDefault();
+        navigate('/', { replace: true });
+        return;
+      }
+
       if (e.target.classList.contains(styles.scrolly)) {
         const scrollTarget = e.target.getAttribute('data-scroll-target');
         const path = e.target.getAttribute('data-path');
@@ -49,7 +91,6 @@ const MainLayout = () => {
         if (path) {
           e.preventDefault();
           navigate(path);
-          console.log('Navigated to:', path);
         }
 
         if (scrollTarget) {
@@ -60,7 +101,6 @@ const MainLayout = () => {
               top: target.offsetTop - navHeight - 5,
               behavior: 'smooth',
             });
-            console.log('Scrolled to:', scrollTarget);
           } else {
             console.warn(`Target not found for scrollTarget: ${scrollTarget}`);
           }
@@ -69,30 +109,42 @@ const MainLayout = () => {
     };
 
     const nav = document.querySelector(`#${styles.nav}`);
-    if (nav) {
-      nav.addEventListener('click', handleScroll);
-    }
+    const navLogo = document.querySelector(`#${styles.logo}`);
+    if (nav) nav.addEventListener('click', handleClick);
+    if (navLogo) navLogo.addEventListener('click', handleLogoClick);
 
     return () => {
-      if (nav) {
-        nav.removeEventListener('click', handleScroll);
-      }
+      if (nav) nav.removeEventListener('click', handleClick);
+      if (navLogo) navLogo.removeEventListener('click', handleClick);
     };
   }, [navigate]);
 
+  if (isChecking) {
+    return <div>Loading...</div>;
+  }
+
   return (
-    <div className={styles.main}>
-      <header id="header">
-        <MainHeader />
-        <div className={styles.headerNav}>
-          <nav className={styles.nav}>
-            <MainTopNav />
-          </nav>
+    <div>
+      <header id="header" className={styles.header}>
+        <div className={styles.logo} onClick={handleLogoClick} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handleLogoClick(e)}>
+          Logo
+        </div>
+        <div className={styles.headerNavGroup}>
+          <MainHeader />
+          <div className={styles.headerNav}>
+            <nav className={styles.nav}>
+              <MainTopNav />
+            </nav>
+          </div>
         </div>
       </header>
+      <div>
+        <MainTopNavLoc />
+      </div>
       <section className={styles.main}>
-      {location.pathname === '/main' && <MainHome />} {/* /main 경로에서만 MainHome 렌더링 */}
-        <Outlet /> {/* 하위 라우트는 MainHome 내부에서 처리 */}
+        <Suspense fallback={<div>Loading...</div>}>
+          <Outlet />
+        </Suspense>
       </section>
       <footer id="footer">
         <MainFooter />

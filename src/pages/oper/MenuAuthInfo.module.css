@@ -1,0 +1,71 @@
+.textLeft {
+  text-align: left;
+  vertical-align: middle;
+  padding-left: 10px;
+  white-space: pre;
+}
+
+.stickyColumn {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 1;
+}
+
+.textCenter {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.tableResponsive {
+  height: calc(100vh - 270px);
+  min-height: 300px;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.table {
+  font-size: 0.85rem;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  vertical-align: middle;
+  border-color: #547574;
+}
+
+.table > tbody > tr > td {
+  background-color: #fff;
+}
+
+.stickyTop {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 2;
+}
+
+.stickyTop > tr > th {
+  background-color: #d6dfdf;
+  border-color: #547574;
+}
+
+/* Bootstrap 스타일 덮어쓰기 */
+.table .formCheckInput {
+  accent-color: #547574; /* 라디오 버튼과 체크박스의 색상을 강제로 변경 (현대 브라우저 지원) */
+}
+
+.formCheckInline {
+  margin-right: 10px;
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.addedRow {
+  background-color: #b9d1b6 !important;
+}

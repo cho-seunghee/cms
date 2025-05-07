@@ -1,49 +1,68 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import axios from "axios";
-import { UserContext } from "../App";
-import { fetchData } from "../utils/dataUtils";
-import utils from "../utils/utils";
+import { fetchData } from "../../utils/dataUtils";
+import common from "../../utils/common";
+import useStore from '../../store/store';
+import { hasPermission } from '../../utils/authUtils';
+import ErrorMsgPopup from "../../components/popup/ErrorMsgPopup";
 
 const PermissionManager = () => {
-  const { user } = useContext(UserContext);
+  const { user } = useStore();
+  const navigate = useNavigate();
   const [permissions, setPermissions] = useState([]);
   const [newPerm, setNewPerm] = useState({ userid: "", menucd: "", menunm: "", menuaccess: "read" });
-  const [filterType, setFilterType] = useState("userid"); // 기본 필터 타입
-  const [filterValue, setFilterValue] = useState(""); // 필터 값
+  const [filterType, setFilterType] = useState("userid");
+  const [filterValue, setFilterValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const itemsPerPage = 5;
   const maxPageButtons = 10;
 
   useEffect(() => {
-    if (user) {
-      fetchPermissions(); // 초기 로드 시 전체 조회
+    if (!user || !hasPermission(user.auth, 'permissions')) {
+      navigate('/');
+    } else if (Object.keys(user).length > 0) {
+      fetchPermissions();
     }
   }, [user]);
 
   const fetchPermissions = async () => {
     const filters = filterValue ? { [filterType]: filterValue } : {};
-    const data = await fetchData(axios, `${utils.getServerUrl("permissions/list")}`, filters, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    const response = await fetchData(axios, `${common.getServerUrl("permissions/list")}`, filters, {
+      headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
     });
-    setPermissions(data || []);
-    setCurrentPage(1); // 조회 시 첫 페이지로 초기화
+
+    if (response && response.ERRCD === "01") {
+      setErrorMessage(response.ERRMSG || "An error occurred while fetching permissions.");
+      setShowErrorPopup(true);
+      setPermissions([]);
+      setCurrentPage(1);
+      return;
+    }
+
+    setErrorMessage("");
+    setShowErrorPopup(false);
+    setPermissions(response || []);
+    setCurrentPage(1);
   };
 
   const handleCreate = async () => {
-    await fetchData(axios, `${utils.getServerUrl("permissions/create")}`, newPerm, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+    await fetchData(axios, `${common.getServerUrl("permissions/create")}`, newPerm, {
+      headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
     });
     setNewPerm({ userid: "", menucd: "", menunm: "", menuaccess: "read" });
-    fetchPermissions(); // 리스트 갱신
+    fetchPermissions();
   };
 
   const handleUpdate = async (id, updatedPerm) => {
     await fetchData(
       axios,
-      `${utils.getServerUrl("permissions/update")}`,
+      `${common.getServerUrl("permissions/update")}/${id}`,
       { id, ...updatedPerm },
       {
-        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
       }
     );
     fetchPermissions();
@@ -51,16 +70,23 @@ const PermissionManager = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm("정말 삭제하시겠습니까?")) {
-      await fetchData(
+      const response = await fetchData(
         axios,
-        `${utils.getServerUrl("permissions/delete")}`,
+        `${common.getServerUrl("permissions/delete")}/${id}`,
         { id },
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` },
         }
       );
+      if (response.message === "Permission not found") {
+        console.log("Already deleted or not found");
+      }
       fetchPermissions();
     }
+  };
+
+  const handleCloseErrorPopup = () => {
+    setShowErrorPopup(false);
   };
 
   const totalPages = Math.ceil(permissions.length / itemsPerPage);
@@ -88,7 +114,8 @@ const PermissionManager = () => {
         Permission Manager
       </h2>
 
-      {/* 조회 조건 영역 */}
+      <ErrorMsgPopup show={showErrorPopup} onHide={handleCloseErrorPopup} message={errorMessage} />
+
       <div className="card p-4 mb-4" style={{ borderRadius: "6px", border: "1px solid #dee2e6" }}>
         <h5 className="mb-3">조회 조건</h5>
         <div className="row g-3 align-items-center">
@@ -120,8 +147,7 @@ const PermissionManager = () => {
         </div>
       </div>
 
-      {/* 추가 버튼 영역 */}
-      {user?.role === "admin" && (
+      {user && hasPermission(user.auth, 'permissions') && (
         <div className="card p-4 mb-4" style={{ borderRadius: "6px", border: "1px solid #dee2e6" }}>
           <div className="row g-3">
             <div className="col-md-2">
@@ -174,7 +200,6 @@ const PermissionManager = () => {
         </div>
       )}
 
-      {/* 리스트 영역 */}
       <div className="card" style={{ borderRadius: "6px", border: "1px solid #dee2e6" }}>
         <table className="table table-bordered table-hover mb-0">
           <thead className="table-light">
@@ -184,7 +209,7 @@ const PermissionManager = () => {
               <th className="text-center">Menu Code</th>
               <th className="text-center">Menu Name</th>
               <th className="text-center">Access</th>
-              {user?.role === "admin" && <th className="text-center">Actions</th>}
+              {user && hasPermission(user.auth, 'permissions') && <th className="text-center">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -195,7 +220,7 @@ const PermissionManager = () => {
                 <td className="text-center">{perm.menucd}</td>
                 <td>{perm.menunm}</td>
                 <td className="text-center">{perm.menuaccess}</td>
-                {user?.role === "admin" && (
+                {user && hasPermission(user.auth, 'permissions') && (
                   <td className="text-center">
                     <button
                       className="btn btn-sm me-2"
@@ -219,7 +244,6 @@ const PermissionManager = () => {
         </table>
       </div>
 
-      {/* 페이징 */}
       {totalPages > 1 && (
         <nav aria-label="Page navigation" className="mt-3">
           <ul className="pagination justify-content-center" style={{ "--bs-pagination-font-size": "0.7rem" }}>

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // API 클라이언트 (기본 설정)
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5173/api',
+  baseURL: import.meta.env.VITE_CLIENT_URL,
   timeout: 10000,
 });
 

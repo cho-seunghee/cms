@@ -1,25 +1,38 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || window.location.origin,
+  baseURL: import.meta.env.VITE_CLIENT_URL || window.location.origin,
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' }
 });
 
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    const token = sessionStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn('No token found');
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
+// apiClient.interceptors.request.use(
+//   (config) => {
+//     const token = sessionStorage.getItem('accessToken');
+//     if (token) config.headers.Authorization = `Bearer ${token}`;
+//     return config;
+//   },
+//   (error) => Promise.reject(error)
+// );
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('accessToken');
+      sessionStorage.removeItem('token');
       window.location.href = '/login';
     }
     return Promise.reject(error);

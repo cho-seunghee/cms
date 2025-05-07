@@ -1,6 +1,6 @@
 import React from 'react';
 import axios from 'axios';
-import utils from '../../utils/utils'
+import common from '../../utils/common'
 
 const ExcelUpload = () => {
   const handleUpload = async (e) => {
@@ -8,8 +8,8 @@ const ExcelUpload = () => {
     const formData = new FormData();
     formData.append('excel', file);
     try {
-      const res = await axios.post(`${utils.getServerUrl('auth/login/excel/upload')}`, formData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      const res = await axios.post(`${common.getServerUrl('auth/login/excel/upload')}`, formData, {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('token')}` }
       });
       alert(res.data.message);
     } catch {

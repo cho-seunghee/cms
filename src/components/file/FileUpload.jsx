@@ -1,6 +1,6 @@
 import React from 'react';
 import axios from 'axios';
-import utils from '../../utils/utils'
+import common from '../../utils/common'
 
 const FileUpload = () => {
   const handleUpload = async (e) => {
@@ -11,11 +11,11 @@ const FileUpload = () => {
       const fileContent = event.target.result;
       try {
         const res = await axios.post(
-          `${utils.getServerUrl('file/create?module=notice&filename=')}${file.name}`,
+          `${common.getServerUrl('file/create?module=notice&filename=')}${file.name}`,
           fileContent,
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              Authorization: `Bearer ${sessionStorage.getItem('token')}`,
               'Content-Type': 'application/octet-stream',
             },
           }

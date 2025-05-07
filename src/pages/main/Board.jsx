@@ -1,24 +1,48 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { fetchData } from '../../utils/dataUtils';
+import api from '../../utils/api';
 import styles from "./Board.module.css";
 
-const Board = ({ notices, isAdmin = false }) => {
+const Board = ({ canWriteBoard }) => {
   const navigate = useNavigate();
+  const [notices, setNotices] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
   const maxPageButtons = 10;
 
+  useEffect(() => {
+    const fetchNotices = async () => {
+      try {
+        const result = await fetchData(api, '/api/notice/list');
+        setNotices(result);
+      } catch (e) {
+        const fallback = await import('../../data/notice.json');
+        setNotices(fallback.default || []);
+        console.log(e);
+      }
+    };
+    fetchNotices();
+  }, []);
+
   const handleNoticeClick = (notice) => {
-    navigate("/board/view", { state: { notice, isAdmin } }); // isAdmin 전달
+    navigate("/main/boardView", { state: { notice } });
   };
 
-  const handleDelete = (notice) => {
+  const handleDelete = async (notice) => {
     if (window.confirm("정말 삭제하시겠습니까?")) {
-      console.log(`삭제: ${notice}`);
+      try {
+        await fetchData(api, '/api/notice/delete', { id: notice.id });
+        setNotices(notices.filter((n) => n.id !== notice.id)); // 로컬 상태 업데이트
+        navigate('/main'); // 변경: '/main/board' -> '/main'
+      } catch (error) {
+        console.error('삭제 실패:', error);
+        navigate('/main'); // 변경: '/main/board' -> '/main'
+      }
     }
   };
 
-  const totalPages = Math.ceil(notices.length / itemsPerPage);
+  const totalPages = Math.ceil((notices?.length || 0) / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentNotices = notices.slice(indexOfFirstItem, indexOfLastItem);
@@ -41,39 +65,43 @@ const Board = ({ notices, isAdmin = false }) => {
     <div className="h-100 p-3 border" style={{ width: "100%" }}>
       <div className="list-group-item d-flex justify-content-between align-items-center">
         <h3 className={`mb-3 fs-5 text-dark ${styles.boardTitle}`}>공지사항</h3>
-        {isAdmin && (
-          <button className={`btn btn-primary mb-3 ${styles.btnReg}`} onClick={() => navigate("/board/write")}>
+        {canWriteBoard && (
+          <button className={`btn btn-primary mb-3 ${styles.btnReg}`} onClick={() => navigate("/main/boardWrite")}>
             등록
           </button>
         )}
       </div>
       <ul className={`list-group list-group-flush ${styles.contentContainer}`}>
-        {currentNotices.map((notice, idx) => (
-          <li key={idx} className="list-group-item d-flex justify-content-between align-items-center">
-            <span onClick={() => handleNoticeClick(notice)} style={{ cursor: "pointer" }}>
-              <span>{notice.id}.</span>
-              <span>{notice.title}</span>
-            </span>
-            <div>
-              <span className={`badge bg-primary rounded-pill me-2 ${styles.contentDate}`}>
-                {notice.date || new Date().toLocaleDateString()}
+        {currentNotices.length > 0 ? (
+          currentNotices.map((notice, idx) => (
+            <li key={idx} className="list-group-item d-flex justify-content-between align-items-center">
+              <span onClick={() => handleNoticeClick(notice)} style={{ cursor: "pointer" }}>
+                <span>{notice.id}.</span>
+                <span>{notice.title}</span>
               </span>
-              {isAdmin && (
-                <>
-                  <button
-                    className={`btn btn-sm btn-warning me-2 ${styles.btnMod}`}
-                    onClick={() => navigate("/board/write", { state: { notice } })}
-                  >
-                    변경
-                  </button>
-                  <button className={`btn btn-sm btn-danger ${styles.btnDel}`} onClick={() => handleDelete(notice)}>
-                    삭제
-                  </button>
-                </>
-              )}
-            </div>
-          </li>
-        ))}
+              <div>
+                <span className={`badge bg-primary rounded-pill me-2 ${styles.contentDate}`}>
+                  {notice.date || new Date().toLocaleDateString()}
+                </span>
+                {canWriteBoard && (
+                  <>
+                    <button
+                      className={`btn btn-sm btn-warning me-2 ${styles.btnMod}`}
+                      onClick={() => navigate("/main/boardWrite", { state: { notice } })}
+                    >
+                      변경
+                    </button>
+                    <button className={`btn btn-sm btn-danger ${styles.btnDel}`} onClick={() => handleDelete(notice)}>
+                      삭제
+                    </button>
+                  </>
+                )}
+              </div>
+            </li>
+          ))
+        ) : (
+          <li className="list-group-item text-center">공지사항이 없습니다.</li>
+        )}
       </ul>
 
       {totalPages > 1 && (
