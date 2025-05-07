@@ -14,11 +14,11 @@ export default defineConfig(({ mode }) => {
         '@': '/src',
       },
     },
-    base: env.VITE_BASE_NAME ? `/${env.VITE_BASE_NAME}` : '/',
+    base: env.VITE_BASE_NAME ? `/${env.VITE_BASE_NAME}/` : '/',
     build: {
-      rollupOptions: {
-        input: '/src/main.jsx',
-      },
+      outDir: 'dist',
+      assetsDir: 'assets',
+      sourcemap: true,
     },
   };
 });
