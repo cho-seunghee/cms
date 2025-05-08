@@ -1,2 +1,0 @@
-const n="_boardTitle_1ur9a_1",t="_btnReg_1ur9a_17",o="_btnMod_1ur9a_31",a="_btnDel_1ur9a_43",e="_contentContainer_1ur9a_67",_="_contentDate_1ur9a_77",c="_pagination_1ur9a_87",i="_pageLink_1ur9a_107",r={boardTitle:n,btnReg:t,btnMod:o,btnDel:a,contentContainer:e,contentDate:_,pagination:c,pageLink:i};export{r as s};
-//# sourceMappingURL=Board.module-C-srwhjA.js.map
