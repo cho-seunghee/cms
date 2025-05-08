@@ -1,4 +1,4 @@
-import React, { useEffect, useState, Suspense, useCallback } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import MainHeader from './MainHeader';
 import MainTopNav from './MainTopNav';
@@ -16,16 +16,16 @@ const MainLayout = () => {
   const { user, clearUser, setMenu, menu } = useStore();
   const [isChecking, setIsChecking] = useState(true);
 
-  const checkTokenValidity = useCallback(async () => {
+  const checkTokenValidity = async () => {
     const token = sessionStorage.getItem('token');
     if (!token) {
       clearUser();
       return false;
     }
     return true;
-  }, [clearUser]);
+  };
 
-  const handleLogoClick = useCallback(async (e) => {
+  const handleLogoClick = async (e) => {
     e.preventDefault();
     const isValid = await checkTokenValidity();
     if (!isValid) {
@@ -33,32 +33,36 @@ const MainLayout = () => {
       return;
     }
     navigate('/main');
-  }, [navigate, checkTokenValidity]);
-
-  const fetchMenu = useCallback(async () => {
-    if (menu) return;
-    try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetchData(
-        api,
-        common.getServerUrl('auth/menu'),
-        { userId: user.empNo },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (response.success && response.data && response.data.length > 0) {
-        setMenu(response.data);
-      } else {
-        setMenu(menuData);
-      }
-    } catch (error) {
-      console.error('Failed to fetch menu:', error);
-      setMenu(menuData);
-    }
-  }, [menu, setMenu, user.empNo]);
+  };
 
   useEffect(() => {
+    const fetchMenu = async () => {
+      if (menu) {
+        return;
+      }
+
+      try {
+        const token = sessionStorage.getItem('token');
+        const response = await fetchData(
+          api,
+          common.getServerUrl('auth/menu'),
+          { userId: user.empNo },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (response.success && response.data && response.data.length > 0) {
+          setMenu(response.data);
+        } else {
+          setMenu(menuData);
+        }
+      } catch (error) {
+        console.error('Failed to fetch menu:', error);
+        setMenu(menuData);
+      }
+    };
+
     fetchMenu();
-  }, [fetchMenu]);
+  }, [setMenu, menu, user]);
 
   useEffect(() => {
     const verifyUser = async () => {
@@ -69,41 +73,41 @@ const MainLayout = () => {
       setIsChecking(false);
     };
     verifyUser();
-  }, [user, navigate, checkTokenValidity]);
-
-  const handleClick = useCallback(async (e) => {
-    const isValid = await checkTokenValidity();
-    if (!isValid) {
-      e.preventDefault();
-      navigate('/', { replace: true });
-      return;
-    }
-
-    if (e.target.classList.contains(styles.scrolly)) {
-      const scrollTarget = e.target.getAttribute('data-scroll-target');
-      const path = e.target.getAttribute('data-path');
-
-      if (path) {
-        e.preventDefault();
-        navigate(path);
-      }
-
-      if (scrollTarget) {
-        const target = document.querySelector(scrollTarget);
-        if (target) {
-          const navHeight = document.querySelector(`#${styles.nav}`)?.offsetHeight || 0;
-          window.scrollTo({
-            top: target.offsetTop - navHeight - 5,
-            behavior: 'smooth',
-          });
-        } else {
-          console.warn(`Target not found for scrollTarget: ${scrollTarget}`);
-        }
-      }
-    }
-  }, [navigate, checkTokenValidity]);
+  }, [user, navigate]);
 
   useEffect(() => {
+    const handleClick = async (e) => {
+      const isValid = await checkTokenValidity();
+      if (!isValid) {
+        e.preventDefault();
+        navigate('/', { replace: true });
+        return;
+      }
+
+      if (e.target.classList.contains(styles.scrolly)) {
+        const scrollTarget = e.target.getAttribute('data-scroll-target');
+        const path = e.target.getAttribute('data-path');
+
+        if (path) {
+          e.preventDefault();
+          navigate(path);
+        }
+
+        if (scrollTarget) {
+          const target = document.querySelector(scrollTarget);
+          if (target) {
+            const navHeight = document.querySelector(`#${styles.nav}`)?.offsetHeight || 0;
+            window.scrollTo({
+              top: target.offsetTop - navHeight - 5,
+              behavior: 'smooth',
+            });
+          } else {
+            console.warn(`Target not found for scrollTarget: ${scrollTarget}`);
+          }
+        }
+      }
+    };
+
     const nav = document.querySelector(`#${styles.nav}`);
     const navLogo = document.querySelector(`#${styles.logo}`);
     if (nav) nav.addEventListener('click', handleClick);
@@ -111,11 +115,11 @@ const MainLayout = () => {
 
     return () => {
       if (nav) nav.removeEventListener('click', handleClick);
-      if (navLogo) navLogo.removeEventListener('click', handleLogoClick);
+      if (navLogo) navLogo.removeEventListener('click', handleClick);
     };
-  }, [handleClick, handleLogoClick]);
+  }, [navigate]);
 
-  if (isChecking) {
+  if (isChecking || !user) {
     return <div>Loading...</div>;
   }
 

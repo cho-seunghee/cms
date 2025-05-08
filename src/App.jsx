@@ -51,12 +51,8 @@ const App = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if (location.pathname === '/' || location.pathname === '') {
-      if (user) {
-        navigate('/main', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+    if ((location.pathname === '/' || location.pathname === '') && user) {
+      navigate('/main', { replace: true });
     }
   }, [user, navigate, location.pathname]);
 

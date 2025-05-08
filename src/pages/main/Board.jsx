@@ -1,6 +1,8 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect} from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { fetchData } from '../../utils/dataUtils';
+import common from "../../utils/common";
 import api from '../../utils/api';
 import styles from "./Board.module.css";
 
@@ -8,53 +10,51 @@ const Board = ({ canWriteBoard }) => {
   const navigate = useNavigate();
   const [notices, setNotices] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const [error, setError] = useState(null);
   const itemsPerPage = 5;
   const maxPageButtons = 10;
 
-  const fetchNotices = useCallback(async () => {
-    try {
-      const result = await fetchData(api, '/api/notice/list');
-      setNotices(result);
-      setError(null);
-    } catch (e) {
-      console.error('Failed to fetch notices:', e);
+  useEffect(() => {
+    const fetchNotices = async () => {
+      const params = { };
       try {
+        const result = await fetchData(
+          axios,
+          `${common.getServerUrl("notice/list")}`,
+          params,
+          { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` } }
+        );
+
+        setNotices(result.data);
+      } catch (e) {
         const fallback = await import('../../data/notice.json');
         setNotices(fallback.default || []);
-        //setError('Using fallback data due to API unavailability');
-      } catch (fallbackError) {
-        console.log(fallbackError);
-        setNotices([]);
+        console.log(e);
       }
-    }
-  }, []);
-
-  useEffect(() => {
+    };
     fetchNotices();
-  }, [fetchNotices]);
+  }, [canWriteBoard]);
 
-  const handleNoticeClick = useCallback((notice) => {
+  const handleNoticeClick = (notice) => {
     navigate("/main/boardView", { state: { notice } });
-  }, [navigate]);
+  };
 
-  const handleDelete = useCallback(async (notice) => {
+  const handleDelete = async (notice) => {
     if (window.confirm("정말 삭제하시겠습니까?")) {
       try {
         await fetchData(api, '/api/notice/delete', { id: notice.id });
-        setNotices((prev) => prev.filter((n) => n.id !== notice.id));
-        navigate('/main');
+        setNotices(notices.filter((n) => n.id !== notice.id)); // 로컬 상태 업데이트
+        navigate('/main'); // 변경: '/main/board' -> '/main'
       } catch (error) {
         console.error('삭제 실패:', error);
-        navigate('/main');
+        navigate('/main'); // 변경: '/main/board' -> '/main'
       }
     }
-  }, [navigate]);
+  };
 
   const totalPages = Math.ceil((notices?.length || 0) / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentNotices = notices.slice(indexOfFirstItem, indexOfLastItem);
+  const currentNotices = notices.errCd != "01" ? notices.slice(indexOfFirstItem, indexOfLastItem) : 0;
 
   const halfMaxButtons = Math.floor(maxPageButtons / 2);
   let startPage = Math.max(1, currentPage - halfMaxButtons);
@@ -66,13 +66,12 @@ const Board = ({ canWriteBoard }) => {
 
   const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
 
-  const handlePageChange = useCallback((pageNumber) => {
+  const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
-  }, []);
+  };
 
   return (
     <div className="h-100 p-3 border" style={{ width: "100%" }}>
-      {error && <div className="alert alert-warning">{error}</div>}
       <div className="list-group-item d-flex justify-content-between align-items-center">
         <h3 className={`mb-3 fs-5 text-dark ${styles.boardTitle}`}>공지사항</h3>
         {canWriteBoard && (
@@ -83,8 +82,8 @@ const Board = ({ canWriteBoard }) => {
       </div>
       <ul className={`list-group list-group-flush ${styles.contentContainer}`}>
         {currentNotices.length > 0 ? (
-          currentNotices.map((notice) => (
-            <li key={notice.id} className="list-group-item d-flex justify-content-between align-items-center">
+          currentNotices.map((notice, idx) => (
+            <li key={idx} className="list-group-item d-flex justify-content-between align-items-center">
               <span onClick={() => handleNoticeClick(notice)} style={{ cursor: "pointer" }}>
                 <span>{notice.id}.</span>
                 <span>{notice.title}</span>

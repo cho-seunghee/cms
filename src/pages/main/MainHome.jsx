@@ -23,7 +23,7 @@ const MainHome = () => {
 
   useEffect(() => {
     if (!user || !hasPermission(user.auth, 'mainhome')) {
-      navigate('/');
+      // navigate('/');
       return;
     }
 
