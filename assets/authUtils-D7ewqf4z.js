@@ -1,2 +1,0 @@
-const U=["AUTH0001","AUTH0002","AUTH0003","",null],H={main:["AUTH0001","AUTH0002","AUTH0003","",null],mainhome:["AUTH0001","AUTH0002","AUTH0003","",null],oper:["AUTH0001","AUTH0002","AUTH0003","",null],mainBoard:["AUTH0001","AUTH0002","AUTH0003","",null],permissions:["AUTH0001"],test1:["AUTH0001","AUTH0002","AUTH0003","",null],tabulatorDirect:["AUTH0001","AUTH0002","AUTH0003","",null]};function n(A,T){return!A||!T?!1:(H[T]||U).includes(A)}export{n as h};
-//# sourceMappingURL=authUtils-D7ewqf4z.js.map
