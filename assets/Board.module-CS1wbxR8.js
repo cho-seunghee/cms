@@ -1,0 +1,2 @@
+const n="_boardTitle_4m4om_1",t="_btnReg_4m4om_17",o="_btnMod_4m4om_31",_="_btnDel_4m4om_43",e="_contentContainer_4m4om_67",m="_contentDate_4m4om_77",a="_pagination_4m4om_87",c="_pageLink_4m4om_107",i="_formControl_4m4om_131",s={boardTitle:n,btnReg:t,btnMod:o,btnDel:_,contentContainer:e,contentDate:m,pagination:a,pageLink:c,formControl:i};export{s};
+//# sourceMappingURL=Board.module-CS1wbxR8.js.map
