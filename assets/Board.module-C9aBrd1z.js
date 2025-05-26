@@ -1,0 +1,2 @@
+const n="_boardTitle_1d402_1",t="_boardTitleLine_1d402_9",e="_btnReg_1d402_17",o="_btnMod_1d402_31",_="_btnDel_1d402_43",i="_btnCancel_1d402_55",a="_contentContainer_1d402_67",c="_contentDate_1d402_77",d="_pagination_1d402_87",l="_pageLink_1d402_107",b="_formControl_1d402_131",s="_fileItem_1d402_153",r="_imageFile_1d402_165",g={boardTitle:n,boardTitleLine:t,btnReg:e,btnMod:o,btnDel:_,btnCancel:i,contentContainer:a,contentDate:c,pagination:d,pageLink:l,formControl:b,fileItem:s,imageFile:r};export{g as s};
+//# sourceMappingURL=Board.module-C9aBrd1z.js.map

@@ -1,2 +1,0 @@
-const n="_boardTitle_1d402_1",t="_boardTitleLine_1d402_9",e="_btnReg_1d402_17",o="_btnMod_1d402_31",_="_btnCancel_1d402_55",i="_contentContainer_1d402_67",a="_contentDate_1d402_77",c="_pagination_1d402_87",d="_pageLink_1d402_107",l="_formControl_1d402_131",s="_fileItem_1d402_153",r="_imageFile_1d402_165",b={boardTitle:n,boardTitleLine:t,btnReg:e,btnMod:o,btnCancel:_,contentContainer:i,contentDate:a,pagination:c,pageLink:d,formControl:l,fileItem:s,imageFile:r};export{b as s};
-//# sourceMappingURL=Board.module-BanqdxPd.js.map
