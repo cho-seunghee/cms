@@ -6,16 +6,24 @@
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node -e \"require('fs').copyFileSync('dist/index.html', 'dist/404.html')\"",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@fullcalendar/daygrid": "^6.1.17",
+    "@fullcalendar/interaction": "^6.1.17",
+    "@fullcalendar/react": "^6.1.17",
+    "@fullcalendar/timegrid": "^6.1.17",
     "axios": "^1.8.4",
     "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.13.1",
+    "date-fns": "^4.1.0",
     "react": "^19.0.0",
+    "react-bootstrap": "^2.10.5",
+    "react-datepicker": "^8.4.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.5.1",
     "swiper": "^11.2.6",
@@ -26,6 +34,7 @@
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/react": "^19.0.10",
+    "@types/react-bootstrap": "^1.0.1",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",
     "@wroud/vite-plugin-ssg": "^3.0.0",

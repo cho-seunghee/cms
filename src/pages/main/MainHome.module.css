@@ -3,11 +3,11 @@
 }
 
 .contentLeftContainer {
-  padding-right: 20px;
+  background-color: #fff;
 }
 
 .contentRightContainer {
-  padding-left: 20px;
+  background-color: #fff;
 }
 
 .swiper-button-prev, .swiper-button-next {

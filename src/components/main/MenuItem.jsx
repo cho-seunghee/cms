@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import common from '../../utils/common';
+import useStore from '../../store/store';
+import { checkTokenValidity, hasPermission } from '../../utils/authUtils'; // Import from authUtils
 import styles from './MainLayout.module.css';
 
 const MenuItem = ({ item }) => {
   const [showChildren, setShowChildren] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, setUser, clearUser } = useStore();
   const basename = common.getBaseName();
 
   const normalizedPath = location.pathname.startsWith(basename)
@@ -19,6 +23,31 @@ const MenuItem = ({ item }) => {
     hasValidPath &&
     normalizedPath === item.URL &&
     !(item.URL === '/main' && normalizedPath !== '/main');
+
+  // Extract screen name from URL (e.g., '/main/board' -> 'mainBoard')
+  const getScreenName = (url) => {
+    if (!url) return '';
+    const segments = url.split('/').filter(Boolean);
+    return segments[segments.length - 1] || segments[0] || '';
+  };
+
+  // NavLink 클릭 시 토큰 검증 및 권한 확인 후 이동
+  const handleNavClick = async (e) => {
+    e.preventDefault();
+    const screen = getScreenName(item.URL);
+    
+    // Check permission
+    if (!hasPermission(user?.auth, screen)) {
+      console.warn(`Permission denied for ${screen}`);
+      return;
+    }
+
+    // Check token validity
+    const isValid = await checkTokenValidity(navigate, user, setUser, clearUser);
+    if (isValid && hasValidPath) {
+      navigate(item.URL);
+    }
+  };
 
   const toggleChildren = (e) => {
     if (hasChildren) {
@@ -59,6 +88,7 @@ const MenuItem = ({ item }) => {
           }
           data-path={item.URL}
           end={item.URL === '/main'}
+          onClick={handleNavClick} // 클릭 시 토큰 검증 및 권한 확인
         >
           {item.MENUNM}
         </NavLink>

@@ -47,10 +47,10 @@ const CommonPopup = ({ show, onHide, onConfirm, title, children }) => {
               )}
             </div>
             <div className={`${styles.modalFooter} modal-footer`}>
-              <button type="button" className={`${styles.btn} ${styles.btnSecondary} btn btn-secondary`} onClick={onHide}>
+              <button type="button" className={`${styles.margin1} ${styles.btn} ${styles.btnSecondary} btn btn-secondary`} onClick={onHide}>
                 취소
               </button>
-              <button type="button" className={`${styles.btn} ${styles.btnPrimary} btn btn-primary`} onClick={handleConfirm}>
+              <button type="button" className={`${styles.margin1} ${styles.btn} ${styles.btnPrimary} btn text-bg-success`} onClick={handleConfirm}>
                 확인
               </button>
             </div>

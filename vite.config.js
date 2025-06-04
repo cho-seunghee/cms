@@ -9,6 +9,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    css: {
+      modules: {
+        localsConvention: 'camelCase', // 선택적: 클래스 이름을 camelCase로 변환
+      },
+    },
     resolve: {
       alias: {
         '@': '/src',

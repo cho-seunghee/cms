@@ -1,4 +1,4 @@
-.overlay {
+  .overlay {
     position: fixed;
     top: 0;
     left: 0;
@@ -38,7 +38,7 @@
   }
   
   .modalTitle {
-    font-size: 1.25rem;
+    font-size: 1rem;
   }
   
   .btnClose {
@@ -48,6 +48,12 @@
   .modalBody {
     color: #333;
     position: relative;
+    border: 1px solid #696969;
+    margin: 10px 5px;
+    padding: 10px 10px;
+    border-radius: 5px;
+    background: #f0f0f0;
+    line-height: 3px !important;
   }
   
   .modalFooter {
@@ -88,4 +94,8 @@
     font-size: 0.9rem;
     z-index: 1060;
     max-width: 300px;
+  }
+  
+  .margin1 {
+    margin: 1px;
   }

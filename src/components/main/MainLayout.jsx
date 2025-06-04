@@ -6,28 +6,26 @@ import MainTopNavLoc from './MainTopNavLoc';
 import MainFooter from './MainFooter';
 import useStore from '../../store/store';
 import { fetchData } from '../../utils/dataUtils';
+import { hasPermission, checkTokenValiditySimple } from '../../utils/authUtils';
 import common from '../../utils/common';
 import api from '../../utils/api.js';
-import menuData from '../../data/menu.json';
 import styles from './MainLayout.module.css';
+import logo from '../../assets/images/logo.png';
 
 const MainLayout = () => {
   const navigate = useNavigate();
   const { user, clearUser, setMenu, menu } = useStore();
   const [isChecking, setIsChecking] = useState(true);
 
-  const checkTokenValidity = async () => {
-    const token = sessionStorage.getItem('token');
-    if (!token) {
-      clearUser();
-      return false;
-    }
-    return true;
-  };
-
   const handleLogoClick = async (e) => {
     e.preventDefault();
-    const isValid = await checkTokenValidity();
+    if (!hasPermission(user?.auth, 'main')) {
+      console.warn('Permission denied for main');
+      navigate('/', { replace: true });
+      return;
+    }
+
+    const isValid = await checkTokenValiditySimple(clearUser);
     if (!isValid) {
       navigate('/', { replace: true });
       return;
@@ -42,22 +40,17 @@ const MainLayout = () => {
       }
 
       try {
-        const token = sessionStorage.getItem('token');
         const response = await fetchData(
           api,
           common.getServerUrl('auth/menu'),
-          { userId: user.empNo },
-          { headers: { Authorization: `Bearer ${token}` } }
+          { userId: user.empNo }
         );
 
         if (response.success && response.data && response.data.length > 0) {
           setMenu(response.data);
-        } else {
-          setMenu(menuData);
         }
       } catch (error) {
         console.error('Failed to fetch menu:', error);
-        setMenu(menuData);
       }
     };
 
@@ -66,18 +59,18 @@ const MainLayout = () => {
 
   useEffect(() => {
     const verifyUser = async () => {
-      const isValid = await checkTokenValidity();
+      const isValid = await checkTokenValiditySimple(clearUser);
       if (!isValid && user) {
         navigate('/', { replace: true });
       }
       setIsChecking(false);
     };
     verifyUser();
-  }, [user, navigate]);
+  }, [user, navigate, clearUser]);
 
   useEffect(() => {
     const handleClick = async (e) => {
-      const isValid = await checkTokenValidity();
+      const isValid = await checkTokenValiditySimple(clearUser);
       if (!isValid) {
         e.preventDefault();
         navigate('/', { replace: true });
@@ -87,6 +80,13 @@ const MainLayout = () => {
       if (e.target.classList.contains(styles.scrolly)) {
         const scrollTarget = e.target.getAttribute('data-scroll-target');
         const path = e.target.getAttribute('data-path');
+
+        const screen = path ? path.split('/').filter(Boolean).pop() : '';
+        if (screen && !hasPermission(user?.auth, screen)) {
+          console.warn(`Permission denied for ${screen}`);
+          e.preventDefault();
+          return;
+        }
 
         if (path) {
           e.preventDefault();
@@ -115,9 +115,9 @@ const MainLayout = () => {
 
     return () => {
       if (nav) nav.removeEventListener('click', handleClick);
-      if (navLogo) navLogo.removeEventListener('click', handleClick);
+      if (navLogo) navLogo.removeEventListener('click', handleLogoClick);
     };
-  }, [navigate]);
+  }, [navigate, user, clearUser]);
 
   if (isChecking || !user) {
     return <div>Loading...</div>;
@@ -127,7 +127,7 @@ const MainLayout = () => {
     <div>
       <header id="header" className={styles.header}>
         <div className={styles.logo} onClick={handleLogoClick} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && handleLogoClick(e)}>
-          Logo
+          <img src={logo} alt="Logo" className={styles.logoImage} />
         </div>
         <div className={styles.headerNavGroup}>
           <MainHeader />

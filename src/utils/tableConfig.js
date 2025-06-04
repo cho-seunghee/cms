@@ -10,6 +10,33 @@ import { TabulatorFull as Tabulator } from 'tabulator-tables';
  * @returns {Tabulator} - 생성된 Tabulator 인스턴스
  */
 export function createTable(element, cols, data, customOptions = {}) {
+  // cellStyle을 처리하는 함수
+  const applyCellStyle = (cell, style) => {
+    if (style && typeof style === 'object') {
+      const cellElement = cell.getElement();
+      Object.keys(style).forEach((styleKey) => {
+        cellElement.style[styleKey] = style[styleKey];
+      });
+    }
+    return cell.getValue() !== undefined && cell.getValue() !== null ? cell.getValue() : '';
+  };
+
+  // 컬럼 정의를 처리하여 cellStyle을 적용하고 제거
+  const processedCols = cols.map((col) => {
+    if (col.cellStyle && typeof col.cellStyle === 'object') {
+      const originalFormatter = col.formatter;
+      const { cellStyle, ...rest } = col; // Destructure only if cellStyle exists
+      return {
+        ...rest,
+        formatter: (cell) => {
+          applyCellStyle(cell, cellStyle);
+          return originalFormatter ? originalFormatter(cell) : cell.getValue();
+        },
+      };
+    }
+    return { ...col }; // Return a new object to avoid mutating the original
+  });
+
   // 기본 옵션 정의 (Tabulator 6.3.1 기준)
   const defaultOptions = {
     // --- 기본 설정 ---
@@ -27,7 +54,7 @@ export function createTable(element, cols, data, customOptions = {}) {
     reactiveData: false,             // 데이터 반응형 처리. true면 데이터 변경 시 자동 갱신 (주의: 성능 영향)
     dataTree: false,                 // 트리 구조 데이터 활성화. true면 계층적 데이터 표시
     dataTreeStartExpanded: false,    // 트리 처음부터 확장 여부. false면 축소 상태로 시작
-    columns: cols,                   // 열 정의. 필수 옵션으로 열 배열 전달
+    columns: processedCols,          // 열 정의. 필수 옵션으로 열 배열 전달
     autoColumns: false,              // 데이터 기반 자동 열 생성. true면 열 정의 없이 데이터에서 추출
     movableColumns: true,            // 열 이동 가능 여부. true면 드래그로 열 순서 변경 가능
     resizableColumns: true,          // 열 크기 조정 가능 여부. true면 열 너비 조정 가능
@@ -50,7 +77,7 @@ export function createTable(element, cols, data, customOptions = {}) {
     paginationInitialPage: 1,        // 초기 페이지 번호. 1부터 시작
 
     // --- 플레이스홀더 ---
-    placeholder: 'No Data Set',      // 데이터 없을 때 표시 메시지. 문자열 또는 함수 가능
+    placeholder: '데이터가 없습니다.',      // 데이터 없을 때 표시 메시지. 문자열 또는 함수 가능
 
     // --- 이벤트 핸들러 ---
     columnMoved: (column, columns) => {

@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import axios from "axios";
+import api from '../../utils/api';
 import { fetchData } from "../../utils/dataUtils";
 import common from "../../utils/common";
 import useStore from '../../store/store';
 import { hasPermission } from '../../utils/authUtils';
-import ErrorMsgPopup from "../../components/popup/ErrorMsgPopup";
-import CommonPopup from "../../components/popup/CommonPopup";
-import menuAuthData from '../../data/MenuAuthInfo.json';
+import { errorMsgPopup } from "../../utils/errorMsgPopup";
+import { msgPopup } from "../../utils/msgPopup";
 import styles from './MenuAuthInfo.module.css';
 
 const MenuAuthInfo = () => {
@@ -16,14 +15,8 @@ const MenuAuthInfo = () => {
   const [data, setData] = useState([]);
   const [initialData, setInitialData] = useState([]);
   const [authFields, setAuthFields] = useState([]);
-  const [showErrorPopup, setShowErrorPopup] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [showAddPopup, setShowAddPopup] = useState(false);
-  const [newMenu, setNewMenu] = useState({
-    MENUNM: "",
-    UPPERMENUID: "",
-  });
-  const [addedMenuIds, setAddedMenuIds] = useState(new Set());
+  const [changedCells, setChangedCells] = useState(new Map());
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user || !hasPermission(user.auth, 'menuAuth')) {
@@ -43,38 +36,35 @@ const MenuAuthInfo = () => {
   };
 
   const fetchMenuAuthData = async () => {
-    const params = { rptCd: "OPERAUTHGROUPMENU", param1: "F" };
+    const params = { param1: "F" };
     try {
       const response = await fetchData(
-        axios,
-        `${common.getServerUrl("mapview/oper/menuauthinfo/list")}`,
-        params,
-        { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` } }
+        api,
+        `${common.getServerUrl("oper/menuauthinfo/list")}`,
+        params
       );
 
       if (!response.success) {
-        setErrorMessage(response.message || "메뉴 권한 데이터를 가져오는 중 오류가 발생했습니다.");
-        setShowErrorPopup(true);
-        const leveledFallbackData = menuAuthData.map(row => ({
-          ...row,
-          MENULEVEL: calculateMenuLevel(row, menuAuthData)
-        }));
-        setData(leveledFallbackData);
-        setInitialData(leveledFallbackData);
-        setAddedMenuIds(new Set());
-        const fallbackAuthNames = menuAuthData.length > 0 && Array.isArray(menuAuthData[0].children)
-          ? menuAuthData[0].children.map(child => child.AUTHNM)
-          : [];
-        setAuthFields(fallbackAuthNames);
+        errorMsgPopup(response.message || "메뉴 권한 데이터를 가져오는 중 오류가 발생했습니다.");
+        setData([]);
+        setInitialData([]);
+        setAuthFields([]);
         return;
+      } else {
+        if (response.errMsg !== '') {
+          errorMsgPopup(response.errMsg);
+          setData([]);
+          setInitialData([]);
+          setAuthFields([]);
+          return;
+        }
       }
 
-      const responseData = Array.isArray(response.data) ? response.data : menuAuthData;
+      const responseData = Array.isArray(response.data) ? response.data : [];
+
       const authNames = responseData.length > 0 && Array.isArray(responseData[0].children)
         ? responseData[0].children.map(child => child.AUTHNM)
-        : menuAuthData.length > 0 && Array.isArray(menuAuthData[0].children)
-          ? menuAuthData[0].children.map(child => child.AUTHNM)
-          : [];
+        : [];
 
       const leveledData = responseData.map(row => ({
         ...row,
@@ -89,12 +79,10 @@ const MenuAuthInfo = () => {
         console.warn('Warning: Inconsistent AUTHNM order across menu items');
       }
 
-      setErrorMessage("");
-      setShowErrorPopup(false);
       setData(leveledData);
       setInitialData(leveledData);
-      setAddedMenuIds(new Set());
       setAuthFields(authNames);
+      setChangedCells(new Map());
     } catch (error) {
       console.error("메뉴 권한 데이터 조회 실패:", {
         message: error.message,
@@ -104,19 +92,10 @@ const MenuAuthInfo = () => {
           headers: error.response.headers
         } : 'No response received'
       });
-      setErrorMessage(error.response?.data?.message || "메뉴 권한 데이터를 가져오는 중 오류가 발생했습니다.");
-      setShowErrorPopup(true);
-      const leveledFallbackData = menuAuthData.map(row => ({
-        ...row,
-        MENULEVEL: calculateMenuLevel(row, menuAuthData)
-      }));
-      setData(leveledFallbackData);
-      setInitialData(leveledFallbackData);
-      setAddedMenuIds(new Set());
-      const fallbackAuthNames = menuAuthData.length > 0 && Array.isArray(menuAuthData[0].children)
-        ? menuAuthData[0].children.map(child => child.AUTHNM)
-        : [];
-      setAuthFields(fallbackAuthNames);
+      errorMsgPopup(error.response?.data?.message || "메뉴 권한 데이터를 가져오는 중 오류가 발생했습니다.");
+      setData([]);
+      setInitialData([]);
+      setAuthFields([]);
     }
   };
 
@@ -139,170 +118,195 @@ const MenuAuthInfo = () => {
     };
   };
 
+  const isCellChanged = (menuId, authName) => {
+    const row = data.find(r => r.MENUID === menuId);
+    const initialRow = initialData.find(r => r.MENUID === menuId);
+    if (!row || !initialRow) return false;
+    const currentAuth = row.children.find(c => c.AUTHNM === authName);
+    const initialAuth = initialRow.children.find(c => c.AUTHNM === authName);
+    return currentAuth && initialAuth && currentAuth.AUTHYN !== initialAuth.AUTHYN;
+  };
+
+  const isRowChanged = (menuId) => {
+    return authFields.some(authName => changedCells.has(`${menuId}-${authName}`));
+  };
+
   const handleRadioChange = (menuId, authName, value) => {
-    setData(
-      data.map((row) =>
+    setData(prevData =>
+      prevData.map(row =>
         row.MENUID === menuId ? updateAuthYn(row, authName, value) : row
       )
     );
+
+    setChangedCells(prev => {
+      const newChangedCells = new Map(prev);
+      const key = `${menuId}-${authName}`;
+      
+      const updatedData = data.map(row =>
+        row.MENUID === menuId ? updateAuthYn(row, authName, value) : row
+      );
+      const row = updatedData.find(r => r.MENUID === menuId);
+      const initialRow = initialData.find(r => r.MENUID === menuId);
+      if (!row || !initialRow) return newChangedCells;
+
+      const currentAuth = row.children.find(c => c.AUTHNM === authName);
+      const initialAuth = initialRow.children.find(c => c.AUTHNM === authName);
+      const isChanged = currentAuth && initialAuth && currentAuth.AUTHYN !== initialAuth.AUTHYN;
+
+      if (isChanged) {
+        newChangedCells.set(key, true);
+      } else {
+        newChangedCells.delete(key);
+      }
+      
+      return newChangedCells;
+    });
   };
 
   const handleSelectAll = (authName, checked) => {
-    setData(
-      data.map((row) => updateAuthYn(row, authName, checked ? "Y" : "N"))
+    setData(prevData =>
+      prevData.map(row => updateAuthYn(row, authName, checked ? "Y" : "N"))
     );
+
+    setChangedCells(prev => {
+      const newChangedCells = new Map(prev);
+      data.forEach(row => {
+        const key = `${row.MENUID}-${authName}`;
+        const initialRow = initialData.find(r => r.MENUID === row.MENUID);
+        if (!initialRow) return;
+        
+        const updatedRow = updateAuthYn(row, authName, checked ? "Y" : "N");
+        const currentAuth = updatedRow.children.find(c => c.AUTHNM === authName);
+        const initialAuth = initialRow.children.find(c => c.AUTHNM === authName);
+        const isChanged = currentAuth && initialAuth && currentAuth.AUTHYN !== initialAuth.AUTHYN;
+
+        if (isChanged) {
+          newChangedCells.set(key, true);
+        } else {
+          newChangedCells.delete(key);
+        }
+      });
+      return newChangedCells;
+    });
   };
 
   const handleReset = () => {
     fetchMenuAuthData();
+    setChangedCells(new Map());
   };
 
-  const handleAddClick = () => {
-    setNewMenu({
-      MENUNM: "",
-      UPPERMENUID: "",
-    });
-    setShowAddPopup(true);
-  };
-
-  const handleAddConfirm = () => {
-    if (!newMenu.MENUNM.trim()) {
-      return { error: "메뉴 이름을 입력해주세요." };
-    }
-
-    const newMenuId = `MENU${String(data.length + 1).padStart(4, '0')}`;
-    const newRow = {
-      MENUID: newMenuId,
-      MENUNM: newMenu.MENUNM,
-      MENULEVEL: newMenu.UPPERMENUID
-        ? calculateMenuLevel({ UPPERMENUID: newMenu.UPPERMENUID, MENUID: newMenuId }, data)
-        : 1,
-      UPPERMENUID: newMenu.UPPERMENUID,
-      MENUORDER: data.length + 1,
-      children: authFields.map((authName, index) => ({
-        AUTHID: `AUTH${String(index + 1).padStart(4, '0')}`,
-        AUTHNM: authName,
-        AUTHYN: "N",
-        children: []
-      }))
-    };
-
-    let updatedData = [...data];
-    if (newMenu.UPPERMENUID) {
-      const parentIndex = data.findIndex(row => row.MENUID === newMenu.UPPERMENUID);
-      if (parentIndex !== -1) {
-        updatedData.splice(parentIndex + 1, 0, newRow);
-      } else {
-        updatedData.push(newRow);
+  const handleCheckboxChange = (menuId) => {
+    setChangedCells(prev => {
+      const newChangedCells = new Map(prev);
+      const hasChanges = authFields.some(authName => 
+        newChangedCells.has(`${menuId}-${authName}`)
+      );
+      
+      if (hasChanges) {
+        authFields.forEach(authName => {
+          const key = `${menuId}-${authName}`;
+          if (newChangedCells.has(key)) {
+            newChangedCells.delete(key);
+          } else if (isCellChanged(menuId, authName)) {
+            newChangedCells.set(key, true);
+          }
+        });
       }
-    } else {
-      updatedData.push(newRow);
-    }
-
-    setData(updatedData);
-    setAddedMenuIds(new Set([...addedMenuIds, newMenuId]));
-    setShowAddPopup(false);
-    setNewMenu({ MENUNM: "", UPPERMENUID: "" });
+      return newChangedCells;
+    });
   };
 
-  const handleAddCancel = () => {
-    setShowAddPopup(false);
-    setNewMenu({ MENUNM: "", UPPERMENUID: "" });
-  };
+  const handleSave = async (e) => {
+    e.preventDefault();
 
-  const handleDelete = (menuId) => {
-    if (!addedMenuIds.has(menuId)) return;
-    setData(data.filter(row => row.MENUID !== menuId));
-    setAddedMenuIds(new Set([...addedMenuIds].filter(id => id !== menuId)));
-  };
+    const saveData = [];
+    const changedRows = new Set();
 
-  const handleSave = async () => {
-    const changedData = data.filter((row) => {
-      const initialRow = initialData.find(r => r.MENUID === row.MENUID);
-      if (!initialRow) return true;
-      return JSON.stringify(row) !== JSON.stringify(initialRow);
+    changedCells.forEach((_, key) => {
+      const [menuId, authName] = key.split('-');
+      if (isRowChanged(menuId)) {
+        changedRows.add(menuId);
+        const row = data.find(r => r.MENUID === menuId);
+        if (row) {
+          const auth = row.children.find(c => c.AUTHNM === authName);
+          if (auth) {
+            saveData.push({
+              pGUBUN: 'U',
+              pAUTHID: auth.AUTHID,
+              pMENUID: row.MENUID,
+              pUSEYN: auth.AUTHYN
+            });
+          }
+        }
+      }
     });
 
-    if (changedData.length === 0) {
-      alert("변경된 데이터가 없습니다.");
+    if (saveData.length === 0) {
+      errorMsgPopup("변경된 데이터가 없습니다.");
       return;
     }
 
-    console.log(changedData);
+    setLoading(true);
 
     try {
-      await fetchData(
-        axios,
-        `${common.getServerUrl("mapview/oper/menuauthinfo/save")}`,
-        { data: changedData },
-        { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` } }
-      );
-      setInitialData([...data]);
-      setAddedMenuIds(new Set());
-      alert("저장되었습니다.");
-    } catch (error) {
-      console.error("저장 실패:", error);
-      setErrorMessage("저장 중 오류가 발생했습니다.");
-      setShowErrorPopup(true);
+      const promises = saveData.map(async (item) => {
+        const params = {
+          pGUBUN: item.pGUBUN,
+          pAUTHID: item.pAUTHID,
+          pMENUID: item.pMENUID,
+          pUSEYN: item.pUSEYN
+        };
+
+        try {
+          const response = await fetchData(
+            api,
+            `${common.getServerUrl("oper/menuauthinfo/save")}`,
+            params
+          );
+
+          if (!response.success) {
+            throw new Error(response.message || `Failed to update menu auth ${item.pMENUID}-${item.pAUTHID}`);
+          }
+
+          return { ...item, success: true };
+        } catch (error) {
+          console.error(`Error processing update for MENUID: ${item.pMENUID}, AUTHID: ${item.pAUTHID}`, error);
+          return { ...item, success: false, error: error.message };
+        }
+      });
+
+      const results = await Promise.all(promises);
+
+      const errors = results.filter((result) => !result.success);
+      if (errors.length > 0) {
+        errorMsgPopup(`일부 작업이 실패했습니다: ${errors.map((e) => e.error).join(", ")}`);
+      } else {
+        msgPopup("모든 변경사항이 성공적으로 저장되었습니다.");
+        await fetchMenuAuthData();
+      }
+    } catch (err) {
+      console.error("Save operation failed:", err);
+      errorMsgPopup(err.message || "저장 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleCloseErrorPopup = () => {
-    setShowErrorPopup(false);
-  };
-
   return (
-    <div className="container mt-4">
-      <h1 className={`mb-4 ${styles.heading}`}>메뉴 권한</h1>
-
-      <ErrorMsgPopup show={showErrorPopup} onHide={handleCloseErrorPopup} message={errorMessage} />
-
+    <div className={`container mt-1 ${styles.container}`}>
       <div className="btn-group-custom d-flex justify-content-end gap-2 mb-3">
-        <button className="btn btn-outline-primary" onClick={handleReset}>초기화</button>
-        <button className="btn btn-outline-primary" onClick={handleAddClick}>추가</button>
-        <button className="btn btn-outline-primary" onClick={handleSave}>저장</button>
+        <button className={`btn text-bg-secondary ${styles.btnCancel}`} onClick={handleReset}>초기화</button>
+        <button className={`btn text-bg-success ${styles.btnReg}`} onClick={handleSave} disabled={loading}>
+          {loading ? "저장 중..." : "저장"}
+        </button>
       </div>
-
-      <CommonPopup
-        show={showAddPopup}
-        onHide={handleAddCancel}
-        onConfirm={handleAddConfirm}
-        title="새 메뉴 추가"
-      >
-        <div className="mb-3">
-          <label htmlFor="menuName" className="form-label">메뉴 이름</label>
-          <input
-            type="text"
-            className="form-control"
-            id="menuName"
-            value={newMenu.MENUNM}
-            onChange={(e) => setNewMenu({ ...newMenu, MENUNM: e.target.value })}
-            placeholder="메뉴 이름을 입력하세요"
-          />
-        </div>
-        <div className="mb-3">
-          <label htmlFor="upperMenuId" className="form-label">상위 메뉴</label>
-          <select
-            className="form-select"
-            id="upperMenuId"
-            value={newMenu.UPPERMENUID}
-            onChange={(e) => setNewMenu({ ...newMenu, UPPERMENUID: e.target.value })}
-          >
-            <option value="">없음 (1레벨)</option>
-            {data.map((row) => (
-              <option key={row.MENUID} value={row.MENUID}>
-                {formatMenuName(row.MENUNM, row.MENULEVEL)}
-              </option>
-            ))}
-          </select>
-        </div>
-      </CommonPopup>
 
       <div className={`table-responsive ${styles.tableResponsive}`}>
         <table className={`table table-bordered ${styles.table}`}>
           <thead className={styles.stickyTop}>
             <tr>
               <th className={`${styles.textCenter} ${styles.stickyColumn}`}>목차관리</th>
+              <th className={`${styles.textCenter} ${styles.stickyColumn2}`}>작업대상</th>
               {authFields.map((authName) => (
                 <th key={authName} className={styles.textCenter}>
                   {authName}
@@ -323,23 +327,21 @@ const MenuAuthInfo = () => {
             {Array.isArray(data) && data.length > 0 ? (
               data.map((row) => (
                 <tr key={row.MENUID}>
-                  <td className={`${styles.textLeft} ${styles.stickyColumn} ${addedMenuIds.has(row.MENUID) ? styles.addedRow : ''}`}>
-                    <div className={styles.menuContainer}>
-                      <span>{formatMenuName(row.MENUNM, row.MENULEVEL)}</span>
-                      {addedMenuIds.has(row.MENUID) && (
-                        <button
-                          className={`btn btn-sm btn-danger ${styles.deleteButton}`}
-                          onClick={() => handleDelete(row.MENUID)}
-                        >
-                          삭제
-                        </button>
-                      )}
-                    </div>
+                  <td className={`${styles.textLeft} ${styles.stickyColumn}`}>
+                    <span>{formatMenuName(row.MENUNM, row.MENULEVEL)}</span>
+                  </td>
+                  <td className={`${styles.textCenter} ${styles.stickyColumn2}`}>
+                    <input
+                      type="checkbox"
+                      className={styles.formCheckInput}
+                      checked={isRowChanged(row.MENUID)}
+                      onChange={() => handleCheckboxChange(row.MENUID)}
+                    />
                   </td>
                   {authFields.map((authName) => (
                     <td
                       key={authName}
-                      className={`${styles.textCenter} ${addedMenuIds.has(row.MENUID) ? styles.addedRow : ''}`}
+                      className={`${styles.textCenter} ${changedCells.has(`${row.MENUID}-${authName}`) ? styles.changedCell : ''}`}
                     >
                       <div className="d-flex justify-content-center gap-2">
                         <div className={`form-check form-check-inline ${styles.formCheckInline}`}>
@@ -371,7 +373,7 @@ const MenuAuthInfo = () => {
               ))
             ) : (
               <tr>
-                <td colSpan={authFields.length + 1} className={styles.textCenter}>
+                <td colSpan={authFields.length + 2} className={styles.textCenter}>
                   데이터가 없습니다.
                 </td>
               </tr>

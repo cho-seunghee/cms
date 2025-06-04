@@ -38,9 +38,14 @@ export const handleReset = (setState, resetValues, additionalCallbacks = []) => 
 
 /**
  * 필터 필드 배열을 기반으로 초기 필터 상태 객체를 생성합니다.
- * @param {Array<Object>} fields - 필터 필드 정의 배열 (각 객체는 id 속성을 포함)
- * @returns {Object} 초기화된 필터 상태 객체 (키: 필드 ID, 값: 빈 문자열)
+ * @param {Array<Object>} fields - 필터 필드 정의 배열 (각 객체는 id와 defaultValue 속성을 포함)
+ * @returns {Object} 초기화된 필터 상태 객체 (키: 필드 ID, 값: defaultValue 또는 빈 문자열)
  */
 export const initialFilters = (fields) => {
-  return Object.fromEntries(fields.map(field => [field.id, ''])); // fields 배열의 각 id를 키로 하고, 값을 빈 문자열로 설정
+  return Object.fromEntries(
+    fields.map(field => [
+      field.id,
+      field.defaultValue !== undefined ? field.defaultValue : (field.type === 'checkbox' ? false : '')
+    ])
+  );
 };

@@ -47,4 +47,23 @@ export default {
   getClientIp() {
     return '192.168.1.1';
   },
+
+  validateVarcharLength(input, maxLength, fieldName) {
+    if (typeof input !== 'string') {
+      return { valid: false, error: `${fieldName}은(는) 문자열이어야 합니다.` };
+    }
+    const charLength = input.length;
+    if (charLength > maxLength) {
+      return {
+        valid: false,
+        error: `${fieldName}은(는) 최대 ${maxLength}자까지 입력 가능합니다. (현재: ${charLength}자)`,
+      };
+    }
+    return { valid: true, error: '' };
+  },
+
+  formatMessageWithLineBreaks(msg) {
+    if (!msg) return "";
+    return msg.replace(/\r?\n/g, "<br />");
+  },
 };

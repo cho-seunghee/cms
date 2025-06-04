@@ -1,10 +1,9 @@
-import React, { useState, useEffect} from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { fetchData } from '../../utils/dataUtils';
-import common from "../../utils/common";
+import common from '../../utils/common';
 import api from '../../utils/api';
-import styles from "./Board.module.css";
+import styles from './Board.module.css';
 
 const Board = ({ canWriteBoard }) => {
   const navigate = useNavigate();
@@ -15,46 +14,48 @@ const Board = ({ canWriteBoard }) => {
 
   useEffect(() => {
     const fetchNotices = async () => {
-      const params = { };
+      const params = {
+        gubun: 'LIST',
+        noticeId: '',
+        debug: 'F',
+      };
       try {
-        const result = await fetchData(
-          axios,
-          `${common.getServerUrl("notice/list")}`,
-          params,
-          { headers: { Authorization: `Bearer ${sessionStorage.getItem("token")}` } }
-        );
-
-        setNotices(result.data);
+        const result = await fetchData(api, common.getServerUrl('notice/list'), params);
+        if (result.errCd === '00') {
+          const mappedNotices = result.data.map((item) => ({
+            id: item.NOTICEID,
+            title: item.TITLE,
+            date: item.REGEDT,
+          }));
+          setNotices(mappedNotices);
+        } else {
+          console.error('Failed to fetch notices:', result.errMsg);
+          setNotices([]);
+        }
       } catch (e) {
+        console.error('Error fetching notices:', e);
         const fallback = await import('../../data/notice.json');
-        setNotices(fallback.default || []);
-        console.log(e);
+        setNotices(
+          fallback.default.map((item) => ({
+            id: item.NOTICEID,
+            title: item.TITLE,
+            date: item.REGEDT,
+          })) || []
+        );
       }
     };
     fetchNotices();
   }, [canWriteBoard]);
 
   const handleNoticeClick = (notice) => {
-    navigate("/main/boardView", { state: { notice } });
+    navigate('/main/boardView', { state: { notice } });
   };
 
-  const handleDelete = async (notice) => {
-    if (window.confirm("정말 삭제하시겠습니까?")) {
-      try {
-        await fetchData(api, '/api/notice/delete', { id: notice.id });
-        setNotices(notices.filter((n) => n.id !== notice.id)); // 로컬 상태 업데이트
-        navigate('/main'); // 변경: '/main/board' -> '/main'
-      } catch (error) {
-        console.error('삭제 실패:', error);
-        navigate('/main'); // 변경: '/main/board' -> '/main'
-      }
-    }
-  };
-
-  const totalPages = Math.ceil((notices?.length || 0) / itemsPerPage);
+  const totalNotices = notices.length || 0;
+  const totalPages = Math.ceil(totalNotices / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentNotices = notices.errCd != "01" ? notices.slice(indexOfFirstItem, indexOfLastItem) : 0;
+  const currentNotices = notices.slice(indexOfFirstItem, indexOfLastItem);
 
   const halfMaxButtons = Math.floor(maxPageButtons / 2);
   let startPage = Math.max(1, currentPage - halfMaxButtons);
@@ -64,18 +65,26 @@ const Board = ({ canWriteBoard }) => {
     startPage = Math.max(1, endPage - maxPageButtons + 1);
   }
 
-  const pageNumbers = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i);
+  const pageNumbers = Array.from(
+    { length: endPage - startPage + 1 },
+    (_, i) => startPage + i
+  );
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
   return (
-    <div className="h-100 p-3 border" style={{ width: "100%" }}>
+    <div className="h-100 p-3 border" style={{ width: '100%' }}>
       <div className="list-group-item d-flex justify-content-between align-items-center">
-        <h3 className={`mb-3 fs-5 text-dark ${styles.boardTitle}`}>공지사항</h3>
+        <h3 className={`mb-3 fs-5 text-dark ${styles.boardTitle}`}>
+          공지사항
+        </h3>
         {canWriteBoard && (
-          <button className={`btn btn-primary mb-3 ${styles.btnReg}`} onClick={() => navigate("/main/boardWrite")}>
+          <button
+            className={`btn btn-primary mb-3 ${styles.btnReg}`}
+            onClick={() => navigate('/main/boardWrite')}
+          >
             등록
           </button>
         )}
@@ -83,28 +92,23 @@ const Board = ({ canWriteBoard }) => {
       <ul className={`list-group list-group-flush ${styles.contentContainer}`}>
         {currentNotices.length > 0 ? (
           currentNotices.map((notice, idx) => (
-            <li key={idx} className="list-group-item d-flex justify-content-between align-items-center">
-              <span onClick={() => handleNoticeClick(notice)} style={{ cursor: "pointer" }}>
-                <span>{notice.id}.</span>
+            <li
+              key={idx}
+              className="list-group-item d-flex justify-content-between align-items-center"
+            >
+              <span
+                onClick={() => handleNoticeClick(notice)}
+                style={{ cursor: 'pointer' }}
+              >
+                <span>{totalNotices - (indexOfFirstItem + idx)}.</span>
                 <span>{notice.title}</span>
               </span>
               <div>
-                <span className={`badge bg-primary rounded-pill me-2 ${styles.contentDate}`}>
+                <span
+                  className={`badge bg-primary rounded-pill me-2 ${styles.contentDate}`}
+                >
                   {notice.date || new Date().toLocaleDateString()}
                 </span>
-                {canWriteBoard && (
-                  <>
-                    <button
-                      className={`btn btn-sm btn-warning me-2 ${styles.btnMod}`}
-                      onClick={() => navigate("/main/boardWrite", { state: { notice } })}
-                    >
-                      변경
-                    </button>
-                    <button className={`btn btn-sm btn-danger ${styles.btnDel}`} onClick={() => handleDelete(notice)}>
-                      삭제
-                    </button>
-                  </>
-                )}
               </div>
             </li>
           ))
@@ -117,32 +121,62 @@ const Board = ({ canWriteBoard }) => {
         <nav aria-label="Page navigation" className="mt-3">
           <ul className={`pagination justify-content-center ${styles.pagination}`}>
             {totalPages > maxPageButtons && (
-              <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-                <button className={`page-link ${styles.pageLink}`} onClick={() => handlePageChange(1)} disabled={currentPage === 1}>
+              <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                <button
+                  className={`page-link ${styles.pageLink}`}
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                >
                   &lt;&lt;
                 </button>
               </li>
             )}
-            <li className={`page-item ${currentPage === 1 ? "disabled" : ""}`}>
-              <button className={`page-link ${styles.pageLink}`} onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+              <button
+                className={`page-link ${styles.pageLink}`}
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
                 &lt;
               </button>
             </li>
             {pageNumbers.map((page) => (
-              <li key={page} className={`page-item ${currentPage === page ? "active" : ""}`}>
-                <button className={`page-link ${styles.pageLink}`} onClick={() => handlePageChange(page)}>
+              <li
+                key={page}
+                className={`page-item ${currentPage === page ? 'active' : ''}`}
+              >
+                <button
+                  className={`page-link ${styles.pageLink}`}
+                  onClick={() => handlePageChange(page)}
+                >
                   {page}
                 </button>
               </li>
             ))}
-            <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-              <button className={`page-link ${styles.pageLink}`} onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+            <li
+              className={`page-item ${
+                currentPage === totalPages ? 'disabled' : ''
+              }`}
+            >
+              <button
+                className={`page-link ${styles.pageLink}`}
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
                 &gt;
               </button>
             </li>
             {totalPages > maxPageButtons && (
-              <li className={`page-item ${currentPage === totalPages ? "disabled" : ""}`}>
-                <button className={`page-link ${styles.pageLink}`} onClick={() => handlePageChange(totalPages)} disabled={currentPage === totalPages}>
+              <li
+                className={`page-item ${
+                  currentPage === totalPages ? 'disabled' : ''
+                }`}
+              >
+                <button
+                  className={`page-link ${styles.pageLink}`}
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
                   &gt;&gt;
                 </button>
               </li>

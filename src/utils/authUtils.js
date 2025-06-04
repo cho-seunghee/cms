@@ -1,26 +1,63 @@
+import { fetchDataGet } from './dataUtils';
+import common from './common';
+import api from './api';
+
 // Default read permissions for all pages
-const DEFAULT_READ_PERMISSIONS = ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null];
+const DEFAULT_READ_PERMISSIONS = ['AUTH0001', 'AUTH0002', 'AUTH0003', 'AUTH0004', 'AUTH0005', 'AUTH0006', 'AUTH0007', '', null];
 
 // Specific permissions for write actions or restricted routes
 const PERMISSION_MAP = {
-  main: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null], // Access to /main
-  mainhome: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null], // Access to /main
-  oper: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null], // Access to /main
-  mainBoard: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null], // Access and write actions for /main/board, /main/boardView, /main/boardWrite
-  permissions: ['AUTH0001'], // Access to /permissions (super-admin only)
-  test1: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null], // Add for /main/test1
-  tabulatorDirect: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null], // Add for /sample/TabulatorDirect
+  main: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null],
+  mainhome: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null],
+  oper: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null],
+  mainBoard: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null],
+  permissions: ['AUTH0001'],
+  test1: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null],
+  tabulatorDirect: ['AUTH0001', 'AUTH0002', 'AUTH0003', '', null],
 };
 
-/**
- * Checks if the user has permission for a given screen
- * @param {string} userAuth - The user's auth value (e.g., 'AUTH0001')
- * @param {string} screen - The screen/route to check (e.g., 'mainBoard')
- * @returns {boolean} - True if the user has permission, false otherwise
- */
 export function hasPermission(userAuth, screen) {
   if (!userAuth || !screen) return false;
-  // Use specific permissions if defined, otherwise grant read access by default
   const allowedAuths = PERMISSION_MAP[screen] || DEFAULT_READ_PERMISSIONS;
   return allowedAuths.includes(userAuth);
+}
+
+export async function checkTokenValidity(navigate, user, setUser, clearUser) {
+  try {
+    const response = await fetchDataGet(
+      api,
+      common.getServerUrl('auth/live'),
+      { extend: true }
+    );
+
+    if (response.success) {
+      setUser({
+        ...user,
+        expiresAt: response.data.expiresAt * 1000,
+      });
+      return true;
+    } else {
+      throw new Error(response.errMsg || 'Token validation failed');
+    }
+  } catch (error) {
+    console.error('Token validation failed:', error.message);
+    clearUser();
+    navigate('/', { replace: true });
+    return false;
+  }
+}
+
+export async function checkTokenValiditySimple(clearUser) {
+  try {
+    const response = await fetchDataGet(
+      api,
+      common.getServerUrl('auth/check'),
+      {}
+    );
+    return response.success;
+  } catch (error) {
+    console.error('Simple token check failed:', error.message);
+    clearUser();
+    return false;
+  }
 }

@@ -1,9 +1,10 @@
 import React, { Suspense, lazy, useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-// import { hasPermission } from './utils/authUtils';
 import useStore from './store/store';
 import MainLayout from './components/main/MainLayout';
-import './index.css';
+import MobileMainLayout from './components/mobile/MobileMainLayout';
+import { MsgPopupProvider } from './components/popup/context/MsgPopupContext';
+import { ErrorMsgPopupProvider } from './components/popup/context/ErrorMsgPopupContext';
 
 // Dynamically import all .jsx files in pages folder and subfolders
 const modules = import.meta.glob('/src/pages/**/*.jsx', { eager: false });
@@ -15,31 +16,46 @@ const routes = Object.keys(modules).map((path) => {
   const relativePath = pathMatch[1];
   const name = relativePath.split('/').pop();
 
-  const isPublic = name.toLowerCase() === 'login';
+  let isPublic = name.toLowerCase() === 'login' || name.toLowerCase() === 'join';
   let permission = isPublic ? null : name.toLowerCase();
   let routePath;
 
-  if (name.toLowerCase() === 'login') {
-    routePath = '/';
+  if (relativePath.toLowerCase() === 'mobile/mobilelogin') {
+    isPublic = true;
+    routePath = '/mobile/Login';
+  } else if (relativePath.toLowerCase() === 'mobile/mobilemain') {
+    routePath = '/mobile/Main';
+  } else if (name.toLowerCase() === 'login') {
+    isPublic = true;
+    routePath = '/Login';
+  } else if (name.toLowerCase() === 'join') {
+    isPublic = true;
+    routePath = '/join';
   } else if (name.toLowerCase() === 'mainhome') {
     routePath = '/main';
   } else {
-    // Preserve exact path from file structure, only converting to lowercase
-    routePath = `/${relativePath.toLowerCase()}`;
-    // Special case for specific routes to match menu.json
-    // if (name.toLowerCase() === 'tabulatordirect') {
-    //   routePath = '/sample/TabulatorDirect';
-    // }
+    if (relativePath.toLowerCase().startsWith('mobile/')) {
+      const mobilePath = relativePath.split('/').slice(1).join('/');
+      routePath = `/mobile/${mobilePath.charAt(0).toUpperCase() + mobilePath.slice(1)}`;
+    } else {
+      routePath = `/${relativePath.toLowerCase()}`;
+    }
   }
 
-  // Map board-related routes to mainBoard permission
   if (['board', 'boardview', 'boardwrite'].includes(name.toLowerCase())) {
     permission = 'mainBoard';
   }
 
+  const component = lazy(() =>
+    modules[path]().catch((err) => {
+      console.error(`Failed to load component for ${path}:`, err);
+      return { default: () => <div>Component loading failed for {path}</div> };
+    })
+  );
+
   return {
     path: routePath,
-    component: lazy(modules[path]),
+    component,
     public: isPublic,
     permission,
   };
@@ -51,47 +67,113 @@ const App = () => {
   const location = useLocation();
 
   useEffect(() => {
-    if ((location.pathname === '/' || location.pathname === '') && user) {
+    const normalizedPath = location.pathname.toLowerCase();
+    if ((normalizedPath === '/' || normalizedPath === '') && user) {
+      navigate('/main', { replace: true });
+    } else if (normalizedPath === '/mobile/login' && user) {
+      navigate('/mobile/Main', { replace: true });
+    } else if (normalizedPath === '/login' && user) {
       navigate('/main', { replace: true });
     }
   }, [user, navigate, location.pathname]);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Routes>
-        {routes.map(({ path, component, public: isPublic }) => {
-          const Component = component;
-          if (isPublic) {
-            // Public route (login): redirect to /main if authenticated
-            return (
-              <Route
-                key={path}
-                path={path}
-                element={user ? <Navigate to="/main" replace /> : <Component />}
-              />
-            );
-          }
-          // Protected routes: render within MainLayout if authenticated
-          return (
+    <ErrorMsgPopupProvider>
+      <MsgPopupProvider>
+        <Suspense fallback={<div>Loading...</div>}>
+          <Routes>
+            {routes.map(({ path, component: Component, public: isPublic }) => {
+              if (!Component) {
+                console.warn(`Component is undefined for path: ${path}`);
+                return null;
+              }
+              if (isPublic) {
+                return (
+                  <Route
+                    key={path}
+                    path={path}
+                    element={
+                      user ? (
+                        <Navigate
+                          to={path === '/Login' ? '/main' : path === '/join' ? '/main' : '/mobile/Main'}
+                          replace
+                        />
+                      ) : (
+                        <Component />
+                      )
+                    }
+                  />
+                );
+              }
+              return null;
+            })}
+
+            {/* Non-mobile routes with MainLayout */}
             <Route
-              key={path}
-              path={path}
+              element={user ? <MainLayout /> : <Navigate to="/Login" replace />}
+            >
+              {routes
+                .filter(
+                  ({ path }) =>
+                    !path.toLowerCase().startsWith('/mobile/') &&
+                    !routes.some((r) => r.public && r.path === path)
+                )
+                .map(({ path, component: Component }) => {
+                  if (!Component) {
+                    console.warn(`Component is undefined for path: ${path}`);
+                    return null;
+                  }
+                  return <Route key={path} path={path} element={<Component />} />;
+                })}
+            </Route>
+
+            {/* Mobile routes with MobileMainLayout */}
+            <Route
               element={
                 user ? (
-                  <MainLayout />
+                  <MobileMainLayout />
                 ) : (
-                  <Navigate to="/" replace />
+                  <Navigate to="/mobile/Login" replace />
                 )
               }
             >
-              <Route path="" element={<Component />} />
+              {routes
+                .filter(
+                  ({ path }) =>
+                    path.toLowerCase().startsWith('/mobile/') &&
+                    !routes.some((r) => r.public && r.path === path)
+                )
+                .map(({ path, component: Component }) => {
+                  if (!Component) {
+                    console.warn(`Component is undefined for path: ${path}`);
+                    return null;
+                  }
+                  return <Route key={path} path={path} element={<Component />} />;
+                })}
             </Route>
-          );
-        })}
-        {/* Catch-all route for unrecognized paths */}
-        <Route path="*" element={<Navigate to={user ? "/main" : "/"} replace />} />
-      </Routes>
-    </Suspense>
+
+            {/* Catch-all route */}
+            <Route
+              path="*"
+              element={
+                <Navigate
+                  to={
+                    user
+                      ? location.pathname.toLowerCase().startsWith('/mobile/')
+                        ? '/mobile/Main'
+                        : '/main'
+                      : location.pathname.toLowerCase().startsWith('/mobile/')
+                      ? '/mobile/Login'
+                      : '/Login'
+                  }
+                  replace
+                />
+              }
+            />
+          </Routes>
+        </Suspense>
+      </MsgPopupProvider>
+    </ErrorMsgPopupProvider>
   );
 };
 

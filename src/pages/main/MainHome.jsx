@@ -4,7 +4,6 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
 import Board from './Board';
 import useStore from '../../store/store';
@@ -68,6 +67,7 @@ const MainHome = () => {
           <div className={`w-50 ${styles.contentLeftContainer}`}>
             <Board notices={notices} canWriteBoard={canWriteBoard} />
           </div>
+          <div className='px-1'></div>
           <div className={`w-50 p-3 border ${styles.contentRightContainer}`}>
             <h3 className={`mb-3 fs-5 text-dark ${styles.boardTitle}`}>AI 검색</h3>
             <ul className="list-group">
