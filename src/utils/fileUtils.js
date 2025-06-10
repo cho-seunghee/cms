@@ -1,14 +1,14 @@
 const fileUtils = {
   // 상수 정의 (환경 변수에서 가져오거나 디폴트값 사용)
-  _MAX_FILES: parseInt(import.meta.env.VITE_MAX_FILES, 10) || 5,
-  _MAX_FILE_SIZE: parseInt(import.meta.env.VITE_MAX_FILE_SIZE, 10) || 50 * 1024 * 1024, // 50MB
-  _ACCEPT: '*', // Default to all files
+  _MAX_FILES: parseInt(import.meta.env.VITE_MAX_FILES, 10) || 5, // 최대 파일 수 (기본값 5)
+  _MAX_FILE_SIZE: parseInt(import.meta.env.VITE_MAX_FILE_SIZE, 10) || 50 * 1024 * 1024, // 최대 파일 크기 (기본값 50MB)
+  _ACCEPT: '*', // 기본적으로 모든 파일 허용
 
   // MAX_FILES getter/setter
-  getMaxFiles() {
+  getMaxFiles() { // 최대 파일 수를 반환
     return this._MAX_FILES;
   },
-  setMaxFiles(value) {
+  setMaxFiles(value) { // 최대 파일 수를 설정
     if (typeof value === 'number' && value > 0) {
       this._MAX_FILES = value;
     } else {
@@ -17,10 +17,10 @@ const fileUtils = {
   },
 
   // MAX_FILE_SIZE getter/setter
-  getMaxFileSize() {
+  getMaxFileSize() { // 최대 파일 크기를 반환
     return this._MAX_FILE_SIZE;
   },
-  setMaxFileSize(value) {
+  setMaxFileSize(value) { // 최대 파일 크기를 설정
     if (typeof value === 'number' && value > 0) {
       this._MAX_FILE_SIZE = value;
     } else {
@@ -29,8 +29,7 @@ const fileUtils = {
   },
 
   // ACCEPT getter/setter
-  getAccept() {
-    // Normalize accept values for browser compatibility
+  getAccept() { // 현재 설정된 파일 허용 타입을 반환 (브라우저 호환성을 위해 정규화)
     if (this._ACCEPT === 'text/*') {
       return 'text/plain';
     }
@@ -42,10 +41,9 @@ const fileUtils = {
     }
     return this._ACCEPT;
   },
-  setAccept(value) {
+    setAccept(value) { // 파일 허용 타입을 설정
     if (typeof value === 'string' && value.trim()) {
       const normalizedValue = value.trim().toLowerCase();
-      // Map common wildcards to supported MIME types
       if (normalizedValue === 'image/*') {
         this._ACCEPT = this.imageExtensions
           .map(ext => this.mimeTypes[ext])
@@ -67,14 +65,18 @@ const fileUtils = {
           .filter(mime => mime)
           .join(',');
       } else if (normalizedValue === 'document/*') {
-        this._ACCEPT = 'document/*'; // Store as document/*, normalize in getAccept
+        this._ACCEPT = 'document/*';
+      } else if (normalizedValue === 'excel/*' || normalizedValue === 'excel') { // Excel 전용 설정 추가
+        this._ACCEPT = this.excelExtensions
+          .map(ext => this.mimeTypes[ext])
+          .filter(mime => mime)
+          .join(',');
       } else if (normalizedValue === '*' || normalizedValue === '*/*') {
         this._ACCEPT = '*';
       } else {
         this._ACCEPT = normalizedValue;
       }
     } else if (Array.isArray(value) && value.length > 0) {
-      // Convert array of extensions to MIME types
       const mimeTypes = value
         .map(ext => this.mimeTypes[ext.toLowerCase()])
         .filter(mime => mime)
@@ -82,48 +84,51 @@ const fileUtils = {
       this._ACCEPT = mimeTypes || '*';
     } else {
       console.warn('ACCEPT는 유효한 문자열 또는 확장자 배열이어야 합니다.');
-      this._ACCEPT = '*';
+      this._ACCEPT = '*'; // 기본값으로 모든 파일 허용
     }
   },
 
-  // Validate file against current accept setting
-  isValidFile(file) {
+  // 파일이 유효한지 확인 (특정 조건에 따라 Excel 전용 체크 가능)
+  isValidFile(file, excelOnly = false) {
     const extension = this.getFileExtension(file.fileName || file.name);
     const mimeType = this.mimeTypes[extension];
 
     if (this._ACCEPT === '*') {
-      return true;
+      return !excelOnly || this.isExcelFileOnly(file); // Excel 전용 체크 적용
     }
 
-    // Check if file matches the accept MIME types
     const acceptTypes = this._ACCEPT.split(',').map(type => type.trim());
     if (acceptTypes.includes(mimeType)) {
-      return true;
+      return !excelOnly || this.isExcelFileOnly(file); // Excel 전용 체크 적용
     }
 
-    // Handle wildcard cases
     if (this._ACCEPT === 'document/*' && this.isDocumentFile(file)) {
-      return true;
+      return !excelOnly || this.isExcelFileOnly(file); // Excel 전용 체크 적용
     }
     if (acceptTypes.some(type => type === 'image/*' && this.isImageFile(file))) {
-      return true;
+      return false; // Excel 전용 모드에서는 이미지 불가
     }
     if (acceptTypes.some(type => type === 'video/*' && this.isVideoFile(file))) {
-      return true;
+      return false; // Excel 전용 모드에서는 동영상 불가
     }
     if (acceptTypes.some(type => type === 'audio/*' && this.isAudioFile(file))) {
-      return true;
+      return false; // Excel 전용 모드에서는 오디오 불가
     }
     if (acceptTypes.some(type => type === 'text/plain' && this.isTextFile(file))) {
-      return true;
+      return false; // Excel 전용 모드에서는 텍스트 불가
     }
 
     return false;
   },
 
+  // Excel 파일만 체크
+  isExcelFileOnly(file) {
+    const extension = this.getFileExtension(file.fileName || file.name);
+    return this.excelExtensions.includes(extension);
+  },
+
   // MIME 타입 매핑
   mimeTypes: {
-    // 이미지 파일
     jpg: 'image/jpeg',
     jpeg: 'image/jpeg',
     png: 'image/png',
@@ -131,13 +136,11 @@ const fileUtils = {
     svg: 'image/svg+xml',
     bmp: 'image/bmp',
     webp: 'image/webp',
-    // ZIP 및 압축 파일
     zip: 'application/zip',
     rar: 'application/x-rar-compressed',
     '7z': 'application/x-7z-compressed',
     tar: 'application/x-tar',
     gz: 'application/gzip',
-    // 동영상 파일
     mp4: 'video/mp4',
     mpeg: 'video/mpeg',
     mov: 'video/quicktime',
@@ -145,13 +148,11 @@ const fileUtils = {
     wmv: 'video/x-ms-wmv',
     flv: 'video/x-flv',
     webm: 'video/webm',
-    // 오디오 파일
     mp3: 'audio/mpeg',
     wav: 'audio/wav',
     ogg: 'audio/ogg',
     aac: 'audio/aac',
     flac: 'audio/flac',
-    // 문서 파일
     pdf: 'application/pdf',
     doc: 'application/msword',
     docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -163,16 +164,15 @@ const fileUtils = {
     log: 'text/plain',
   },
 
-  // 파일 확장자 리스트
   imageExtensions: ['jpg', 'jpeg', 'png', 'gif', 'svg', 'bmp', 'webp'],
   zipExtensions: ['zip', 'rar', '7z', 'tar', 'gz'],
   videoExtensions: ['mp4', 'mpeg', 'mov', 'avi', 'wmv', 'flv', 'webm'],
   audioExtensions: ['mp3', 'wav', 'ogg', 'aac', 'flac'],
   textExtensions: ['txt', 'log'],
   documentExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'],
+  excelExtensions: ['xls', 'xlsx'],
 
-  // 파일 크기 포맷팅 (KB, MB 등으로 변환)
-  formatFileSize(bytes) {
+  formatFileSize(bytes) { // 파일 크기를 가독성 있는 단위로 변환
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
@@ -180,49 +180,46 @@ const fileUtils = {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   },
 
-  // 파일 확장자 추출
-  getFileExtension(fileName) {
+  getFileExtension(fileName) { // 파일 이름에서 확장자를 추출
     return fileName.split('.').pop().toLowerCase();
   },
 
-  // 이미지 파일 여부 체크
-  isImageFile(file) {
+  isImageFile(file) { // 이미지 파일인지 확인
     const extension = this.getFileExtension(file.fileName || file.name);
     return this.imageExtensions.includes(extension);
   },
 
-  // ZIP 파일 여부 체크
-  isZipFile(file) {
+  isZipFile(file) { // ZIP 파일인지 확인
     const extension = this.getFileExtension(file.fileName || file.name);
     return this.zipExtensions.includes(extension);
   },
 
-  // 동영상 파일 여부 체크
-  isVideoFile(file) {
+  isVideoFile(file) { // 동영상 파일인지 확인
     const extension = this.getFileExtension(file.fileName || file.name);
     return this.videoExtensions.includes(extension);
   },
 
-  // 오디오 파일 여부 체크
-  isAudioFile(file) {
+  isAudioFile(file) { // 오디오 파일인지 확인
     const extension = this.getFileExtension(file.fileName || file.name);
     return this.audioExtensions.includes(extension);
   },
 
-  // 텍스트 파일 여부 체크
-  isTextFile(file) {
+  isTextFile(file) { // 텍스트 파일인지 확인
     const extension = this.getFileExtension(file.fileName || file.name);
     return this.textExtensions.includes(extension);
   },
 
-  // 문서 파일 여부 체크
-  isDocumentFile(file) {
+  isDocumentFile(file) { // 문서 파일인지 확인
     const extension = this.getFileExtension(file.fileName || file.name);
     return this.documentExtensions.includes(extension);
   },
 
-  // 파일 타입에 따른 Bootstrap 아이콘 반환
-  getFileIcon(file) {
+  isExcelFile(file) { // 엑셀 파일인지 확인
+    const extension = this.getFileExtension(file.fileName || file.name);
+    return this.excelExtensions.includes(extension);
+  },
+
+  getFileIcon(file) { // 파일 타입에 따른 Bootstrap 아이콘 반환
     const extension = this.getFileExtension(file.fileName || file.name);
     if (this.imageExtensions.includes(extension)) {
       return 'bi-image';
@@ -247,8 +244,7 @@ const fileUtils = {
     }
   },
 
-  // Base64 문자열을 UTF-8 텍스트로 디코딩
-  decodeBase64ToText(base64String) {
+  decodeBase64ToText(base64String) { // Base64 문자열을 UTF-8 텍스트로 디코딩
     try {
       const decodedData = atob(base64String);
       return decodeURIComponent(escape(decodedData));
@@ -258,8 +254,7 @@ const fileUtils = {
     }
   },
 
-  // UTF-8 텍스트를 Base64 문자열로 인코딩
-  encodeTextToBase64(text) {
+  encodeTextToBase64(text) { // UTF-8 텍스트를 Base64 문자열로 인코딩
     try {
       const encodedData = unescape(encodeURIComponent(text));
       return btoa(encodedData);

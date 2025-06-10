@@ -1,13 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchJsonData } from '../../utils/dataUtils';
+//import { fetchJsonData } from '../../utils/dataUtils';
+//import sampleData from '../../data/data.json';
 import { createTable } from '../../utils/tableConfig';
 import { initialFilters } from '../../utils/tableEvent';
 import { handleDownloadExcel } from '../../utils/tableExcel';
+import common from "../../utils/common";
 import MainSearch from '../../components/main/MainSearch';
 import TableSearch from '../../components/table/TableSearch';
 import CommonPopup from '../../components/popup/CommonPopup';
+import ExcelUploadPopup from '../../components/popup/ExcelUploadPopup'; // Add this line
 import styles from '../../components/table/TableSearch.module.css';
-import sampleData from '../../data/data.json';
+import { fetchData } from '../../utils/dataUtils';
+import api from '../../utils/api';
+import { errorMsgPopup } from '../../utils/errorMsgPopup';
 
 /**
  * 필드 옵션 데이터를 반환
@@ -99,7 +104,9 @@ const OrgSelectContent = ({ initialOrg, onSelect }) => {
  */
 const TabulatorDirect = () => {
   const [showPopup, setShowPopup] = useState(false);
+  const [showExcelPopup, setShowExcelPopup] = useState(false); // Add this line
   const [popupTitle, setPopupTitle] = useState('');
+  const [excelPopupTitle, setExcelPopupTitle] = useState(''); // Add this line
   const [popupContent, setPopupContent] = useState(null);
   const [popupOnConfirm, setPopupOnConfirm] = useState(null);
   const [selectedOrg, setSelectedOrg] = useState(''); // 조직 선택 팝업용 상태
@@ -174,6 +181,7 @@ const TabulatorDirect = () => {
           { id: 'searchBtn', type: 'button', row: 1, label: '검색', eventType: 'search', width: '80px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
           { id: 'resetBtn', type: 'button', row: 8, label: '초기화', eventType: 'reset', width: '80px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
           { id: 'popupBtn2', type: 'button', row: '8', label: '팝업 버튼', eventType: 'showPopup', width: '100px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
+          { id: 'excelUploadBtn', type: 'button', row: '8', label: '엑셀업로드', eventType: 'showExcelUploadPopup', width: '100px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
         ],
       },
     ],
@@ -204,10 +212,13 @@ const TabulatorDirect = () => {
 
   // 테이블 컬럼 정의
   const columns = [
-    { title: 'ID', field: 'id', width: 80, headerHozAlign: 'center', hozAlign: 'center' },
-    { title: '이름', field: 'name', width: 150, headerHozAlign: 'center', hozAlign: 'left' },
-    { title: '나이', field: 'age', sorter: 'number', headerHozAlign: 'center', hozAlign: 'right' },
-    { title: '상태', field: 'status', headerHozAlign: 'center', hozAlign: 'left' },
+    { title: 'ID', field: 'ID', width: 80, headerHozAlign: 'center', hozAlign: 'center' },
+    { title: '이름', field: 'NAME', width: 150, headerHozAlign: 'center', hozAlign: 'center' },
+    { title: '나이', field: 'AGE', sorter: 'number', headerHozAlign: 'center', hozAlign: 'center' },
+    { title: '상태', field: 'STATUS', headerHozAlign: 'center', hozAlign: 'center' },
+    { title: '등록일', field: 'REGDT', headerHozAlign: 'center', hozAlign: 'center' },
+    { title: '시작시간', field: 'STARTTIME', headerHozAlign: 'center', hozAlign: 'center' },
+    { title: '종료시간', field: 'ENDTIME', headerHozAlign: 'center', hozAlign: 'center' },
   ];
 
   // 데이터 로드 함수
@@ -226,13 +237,38 @@ const TabulatorDirect = () => {
     // 최신 필터 사용
     const currentFilters = latestFiltersRef.current;
 
-    const params = {
-      name: currentFilters.name || '',
-      status: currentFilters.status || '',
-    };
-
-    // API 통신 전환 시 이 부분들을 수정하면된다. fetchData()
+    // API 로 통신할 경우 fetchData()
     try {
+      const params = {pGUBUN: 'LIST', pNAME: currentFilters.name || '',pSTATUS: currentFilters.status || '', pDEBUG: "F"};
+
+      const response = await fetchData(api, `${common.getServerUrl("sample/tabulator/list")}`, params);
+      if (!response.success) {
+        errorMsgPopup(response.message || "데이터를 가져오는 중 오류가 발생했습니다.");
+        setData([]);
+        return;
+      }
+      if (response.errMsg !== "") {
+        errorMsgPopup(response.errMsg);
+        setData([]);
+        return;
+      }
+      const responseData = Array.isArray(response.data) ? response.data : [];
+      setData(responseData);
+    } catch (err) {
+      errorMsgPopup(err.response?.data?.message || "데이터를 가져오는 중 오류가 발생했습니다.");
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+
+    // JSON으로 만 처리 할때 fetchJsonData()
+    /*
+    try {
+      const params = {
+        name: currentFilters.name || '',
+        status: currentFilters.status || '',
+      };
+
       const result = await fetchJsonData(sampleData, params);
 
       // 데이터를 배열로 정규화
@@ -251,7 +287,9 @@ const TabulatorDirect = () => {
     } finally {
       setLoading(false);
     }
+      */
   };
+  
 
   // 동적 이벤트 처리
   /**
@@ -305,6 +343,9 @@ const TabulatorDirect = () => {
         return true;
       });
       setShowPopup(true);
+    } else if (eventType === 'showExcelUploadPopup') {
+      setExcelPopupTitle('일괄등록');
+      setShowExcelPopup(true);
     } else if (eventType === 'selectChange') {
       const { id, value } = eventData;
       if (id === 'status1') {
@@ -440,6 +481,19 @@ const TabulatorDirect = () => {
       >
         {popupContent}
       </CommonPopup>
+      <ExcelUploadPopup
+        show={showExcelPopup}
+        onHide={() => setShowExcelPopup(false)}
+        onSave={(result) => {
+          if (result.errCd === '00') {
+            loadData(); // Refresh table on success
+          }
+          return result;
+        }}
+        title={excelPopupTitle}
+        rptCd="exceluploadsample"
+        templateParams={{ gubun: 'DETAIL', debug: 'F' }}
+      />
     </div>
   );
 };
