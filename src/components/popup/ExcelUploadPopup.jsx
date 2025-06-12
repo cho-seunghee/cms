@@ -5,7 +5,7 @@ import api from '../../utils/api';
 import common from '../../utils/common';
 import styles from "./ExcelUploadPopup.module.css";
 
-const ExcelUploadPopup = ({ show, onHide, title, rptCd = "EXCEL_UPLOAD", templateParams = { gubun: 'DETAIL', debug: 'F' } }) => {
+const ExcelUploadPopup = ({ show, onHide, title, rptCd, templateParams }) => {
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
   const [files, setFiles] = useState(null);
@@ -28,8 +28,8 @@ const ExcelUploadPopup = ({ show, onHide, title, rptCd = "EXCEL_UPLOAD", templat
 
   const handleDownload = async () => {
     try {
-      const result = await fetchData(api, common.getServerUrl("excelupload/templatelist"), templateParams);
-      if (result.errCd === '00' && result.data && result.data.length > 0) {
+      const result = await fetchData(api, common.getServerUrl("excelupload/template/filelist"), templateParams);
+      if (result.errCd === '00' && result.data && result.data[0].FILEDATA.length > 0) {
         const fileData = result.data[0].FILEDATA;
         const fileName = result.data[0].FILENM || 'template.xlsx';
         const mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -41,7 +41,8 @@ const ExcelUploadPopup = ({ show, onHide, title, rptCd = "EXCEL_UPLOAD", templat
         link.click();
         document.body.removeChild(link);
       } else {
-        setToastMessage(result.errMsg || "템플릿 파일을 다운로드할 수 없습니다.");
+        //setToastMessage(result.errMsg || "템플릿 파일을 다운로드할 수 없습니다.");
+        setToastMessage("템플릿 파일을 다운로드할 수 없습니다.");
         setShowToast(true);
       }
     } catch (error) {

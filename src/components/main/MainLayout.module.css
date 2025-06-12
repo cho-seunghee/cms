@@ -58,7 +58,6 @@
 .navList {
   list-style: none;
   margin: 0;
-  padding: 0;
   display: flex;
   justify-content: center;
 }
@@ -86,16 +85,12 @@
 .nav li:hover,
 .nav li.active {
   top: 3px;
+  background: none; /* 전역 .active 충돌 방지 */
 }
 
 .nav li.active a,
 .nav li.active span {
   background: var(--secondary-color);
-  color: var(--white);
-}
-
-.nav li.current a {
-  background: #37706f;
   color: var(--white);
 }
 
@@ -131,18 +126,17 @@
   background-color: #7e9494;
 }
 
-.active,
-.current .navLink {
-  background-color: var(--primary-color);
-  color: var(--white);
+.nav .navLink.navLinkActive {
+  background-color: var(--primary-color) !important; /* 우선순위 강화 */
+  color: var(--white) !important;
 }
 
 /* Secondary menu (direct child of .menuItem) */
 .menuItem > .subMenu {
   position: absolute;
-  top: calc(100% - 10px); /* Slightly overlap upwards by 10px */
-  left: 50%; /* Shift to the right */
-  transform: translateX(-50%); /* Center relative to the menu item */
+  top: calc(100% - 10px);
+  left: 0; /* Align to the left edge of the parent */
+  transform: none; /* Remove centering */
   text-transform: uppercase;
   color: var(--white);
   background: var(--text-color);
@@ -153,17 +147,17 @@
   margin: 0;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease; /* Added visibility transition */
-  transition-delay: 0.1s; /* Slight delay to prevent accidental hiding */
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition-delay: 0.2s;
   border-radius: 6px;
   z-index: 1000;
 }
 
 /* Tertiary menu (nested submenu) */
 .menuItem .subMenu .subMenu {
-  top: -10px; /* Overlap upwards relative to the secondary menu */
-  left: calc(100% + 10px); /* Position to the right with 10px gap */
-  transform: none; /* Remove centering for nested menus */
+  top: -10px;
+  left: 100%; /* Keep it adjacent to the right edge */
+  transform: none;
 }
 
 /* Common submenu visibility */
@@ -368,8 +362,19 @@
 
   /* 메뉴 아이템 */
   .menuItem {
-    position: static;
-    padding: 0; /* Reset padding for mobile */
+    position: relative;
+    padding: 5px;
+  }
+
+  .menuItem::before {
+    content: '';
+    position: absolute;
+    top: 100%; /* Below the menu item */
+    left: 0;
+    width: 100%; /* Match the width of the parent */
+    height: 20px; /* Extend the hover area downward (adjust as needed) */
+    background: transparent;
+    z-index: 1001; /* Above other elements */
   }
 
   .menuLink,

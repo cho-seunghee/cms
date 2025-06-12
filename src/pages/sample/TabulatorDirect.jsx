@@ -492,7 +492,7 @@ const TabulatorDirect = () => {
         }}
         title={excelPopupTitle}
         rptCd="exceluploadsample"
-        templateParams={{ gubun: 'DETAIL', debug: 'F' }}
+        templateParams={{ pGUBUN: 'RPTCD', pTITLE: '', pFILEID: '', pRPTCD: 'exceluploadsample', pDEBUG: 'F' }}
       />
     </div>
   );

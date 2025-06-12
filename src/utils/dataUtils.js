@@ -20,10 +20,9 @@ export async function fetchData(api, url, filters = {}, config = {}) {
  * JSON 데이터를 필터링하여 반환합니다.
  * @param {Object|Array} jsonData - 필터링할 JSON 데이터 (객체 또는 배열)
  * @param {Object} [filters={}] - 필터링 조건 (예: { name: 'john', status: 'active' })
- * @param {Object} [config={}] - 추가 설정 (현재 미사용, API 호환성을 위해 유지)
  * @returns {Promise<Array|Error>} 필터링된 데이터 배열 또는 오류 객체
  */
-export async function fetchJsonData(jsonData, filters = {}, config = {}) {
+export async function fetchJsonData(jsonData, filters = {}) {
   try {
     // Ensure jsonData is an array for consistent processing
     const dataArray = Array.isArray(jsonData) ? jsonData : [jsonData];

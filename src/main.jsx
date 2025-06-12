@@ -53,7 +53,7 @@ const Main = () => {
         styleElement.remove();
       }
     };
-  }, [location]);
+  }, [location.pathname]);
 
   return <App />;
 };
