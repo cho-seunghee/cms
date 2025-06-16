@@ -31,14 +31,16 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_SERVER_API_URL: ${{ secrets.VITE_SERVER_API_URL }}  # From GitHub Secrets
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}  # From GitHub Secrets
+          VITE_SERVER_API_URL: ${{ secrets.VITE_SERVER_API_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
       - name: Debug build output
         run: |
           ls -la
           ls -la dist || echo "dist folder not found"
           cat dist/index.html || echo "index.html not found"
+          find dist -type f
+          echo "Checking VITE_BASE_NAME: $VITE_BASE_NAME"
 
       - name: Create 404.html
         run: cp dist/index.html dist/404.html || echo "Failed to copy index.html to 404.html"
