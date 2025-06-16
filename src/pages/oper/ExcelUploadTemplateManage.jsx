@@ -422,9 +422,15 @@ const ExcelUploadTemplateManage = () => {
         show={showAddPopup}
         onHide={handleUploadCancel}
         title="템플릿 추가"
+        requiresConfirm={true} // Enable confirmation for "템플릿추가"
+        confirmMessage="템플릿을 추가하시겠습니까?" // Custom confirmation message
         buttons={[
           { label: "닫기", className: `${styles.btn} ${styles.btnSecondary} btn btn-secondary`, action: handleUploadCancel },
-          { label: "템플릿추가", className: `${styles.btn} ${styles.btnPrimary} btn text-bg-success`, action: () => handleUpload().then(result => ({ result, onSuccess: handleSearch })) },
+          {
+            label: "템플릿추가",
+            className: `${styles.btn} ${styles.btnPrimary} btn text-bg-success`,
+            action: () => handleUpload().then((result) => ({ result, onSuccess: handleSearch })),
+          },
         ]}
       >
         <div className="mb-3">

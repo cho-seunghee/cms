@@ -103,8 +103,12 @@ const Join = ({ show, onHide }) => {
       if (!response.success) {
         throw new Error(response.errMsg || '가입정보가 잘못되었습니다.');
       } else {
-        if (response.errMsg !== '') {
-          errorMsgPopup(response.errMsg);
+        if (response.errMsg !== '' || response.data[0].ERRCD !== '00') {
+          let errMsg = response.errMsg;
+
+          if (response.data[0].ERRMSG !== '') errMsg = response.data[0].ERRMSG;
+
+          errorMsgPopup(errMsg);
         } else {
           msgPopup("가입되었습니다.");
           navigate('/login');
@@ -147,20 +151,6 @@ const Join = ({ show, onHide }) => {
                     />
                   </div>
                   <div className={styles.formGroup}>
-                    <label htmlFor="empNm" className="form-label">
-                      <i className="bi bi-person-fill me-2"></i>이름 <i className="bi bi-asterisk text-danger"></i>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="empNm"
-                      value={empNm}
-                      onChange={(e) => setEmpNm(e.target.value)}
-                      required
-                      placeholder="이름을 입력하세요"
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
                     <label htmlFor="empPwd" className="form-label">
                       <i className="bi bi-lock me-2"></i>비밀번호 <i className="bi bi-asterisk text-danger"></i>
                     </label>
@@ -186,6 +176,20 @@ const Join = ({ show, onHide }) => {
                       onChange={(e) => setConfirmPwd(e.target.value)}
                       required
                       placeholder="비밀번호를 다시 입력하세요"
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="empNm" className="form-label">
+                      <i className="bi bi-person-fill me-2"></i>이름 <i className="bi bi-asterisk text-danger"></i>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="empNm"
+                      value={empNm}
+                      onChange={(e) => setEmpNm(e.target.value)}
+                      required
+                      placeholder="이름을 입력하세요"
                     />
                   </div>
                   <div className={styles.formGroup}>
