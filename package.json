@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
-    "dev": "vite",
+    "dev": "vite --mode development",
     "build": "vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -41,7 +41,6 @@
     "eslint": "^9.21.0",
     "eslint-plugin-react-hooks": "^5.1.0",
     "eslint-plugin-react-refresh": "^0.4.19",
-    "gh-pages": "^6.3.0",
     "globals": "^15.15.0",
     "npm-force-resolutions": "^0.0.10",
     "postcss": "^8.5.3",

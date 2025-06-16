@@ -30,12 +30,15 @@ jobs:
 
       - name: Build
         run: npm run build
-        # Removed VITE_CLIENT_URL env, relies on .env.production
+        env:
+          VITE_SERVER_API_URL: ${{ secrets.VITE_SERVER_API_URL }}  # From GitHub Secrets
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}  # From GitHub Secrets
 
       - name: Debug build output
         run: |
           ls -la
           ls -la dist || echo "dist folder not found"
+          cat dist/index.html || echo "index.html not found"
 
       - name: Create 404.html
         run: cp dist/index.html dist/404.html || echo "Failed to copy index.html to 404.html"
