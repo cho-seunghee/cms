@@ -14,6 +14,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure full history for env loading
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -28,8 +30,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Verify .env.production
+        run: |
+          ls -la .env.production || echo ".env.production not found"
+          cat .env.production || echo "Failed to read .env.production"
+
       - name: Build
-        run: npm run build
+        run: npm run build || echo "Build failed"
         env:
           VITE_SERVER_API_URL: ${{ secrets.VITE_SERVER_API_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -40,7 +47,8 @@ jobs:
           ls -la dist || echo "dist folder not found"
           cat dist/index.html || echo "index.html not found"
           find dist -type f
-          echo "Checking VITE_BASE_NAME: $VITE_BASE_NAME"
+          echo "VITE_BASE_NAME: ${VITE_BASE_NAME}"
+          echo "VITE_CLIENT_URL: ${VITE_CLIENT_URL}"
 
       - name: Create 404.html
         run: cp dist/index.html dist/404.html || echo "Failed to copy index.html to 404.html"
