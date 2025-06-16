@@ -18,17 +18,23 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '20'  # Node.js 20 사용 (Rollup 호환성)
           cache: 'npm'
 
+      - name: Clean node_modules and package-lock.json
+        run: |
+          rm -rf node_modules package-lock.json
+
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build
         run: npm run build
         env:
           VITE_CLIENT_URL: https://cho-seunghee.github.io/cms
-          # VITE_SERVER_API_URL: https://backend-service-ko5f.onrender.com/api
+
+      - name: Create 404.html
+        run: cp build/index.html build/404.html
 
       - name: Add .nojekyll
         run: touch build/.nojekyll
