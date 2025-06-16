@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'  # Node.js
+          node-version: '20'
           cache: 'npm'
 
       - name: Clean node_modules and package-lock.json
@@ -30,19 +30,15 @@ jobs:
 
       - name: Build
         run: npm run build
-        env:
-          VITE_CLIENT_URL: https://cho-seunghee.github.io/cms
+        # Removed VITE_CLIENT_URL env, relies on .env.production
 
       - name: Debug build output
         run: |
           ls -la
           ls -la dist || echo "dist folder not found"
-          ls -la build || echo "build folder not found"
-        # Check if build or dist folder exists and list contents
 
       - name: Create 404.html
         run: cp dist/index.html dist/404.html || echo "Failed to copy index.html to 404.html"
-        # Adjusted to dist; added error handling
 
       - name: Add .nojekyll
         run: touch dist/.nojekyll
@@ -51,5 +47,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist  # Adjusted to dist
+          publish_dir: ./dist
           force_orphan: true
