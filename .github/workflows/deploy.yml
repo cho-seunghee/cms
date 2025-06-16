@@ -2,20 +2,24 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: 
-     - gh-pages  # gh-pages 브랜치에서만 워크플로 실행
+    branches:
+      - main
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '22.14.0'
+          node-version: '22'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
@@ -24,12 +28,14 @@ jobs:
         run: npm run build
         env:
           VITE_CLIENT_URL: https://cho-seunghee.github.io/cms
-          #VITE_SERVER_API_URL: https://backend-service-ko5f.onrender.com/api
+          # VITE_SERVER_API_URL: https://backend-service-ko5f.onrender.com/api
+
+      - name: Add .nojekyll
+        run: touch build/.nojekyll
 
       - name: Deploy to GitHub Pages
-        run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          npm run deploy -- --repo=https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/cho-seunghee/cms.git
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          force_orphan: true
