@@ -88,6 +88,8 @@ export function createTable(element, cols, data, customOptions = {}) {
   // 사용자 정의 옵션과 기본 옵션 병합
   const options = { ...defaultOptions, ...customOptions, data };
 
+  //options.headerSortElement = "<span style='font-size: 1rem; padding: 5px;'>"; // Increase header font size and padding
+
   try {
     const table = new Tabulator(element, options);
     return table;

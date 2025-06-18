@@ -8,6 +8,7 @@ import common from "../../utils/common";
 import MainSearch from '../../components/main/MainSearch';
 import TableSearch from '../../components/table/TableSearch';
 import CommonPopup from '../../components/popup/CommonPopup';
+import UserSearchPopup from '../../components/popup/UserSearchPopup';
 import ExcelUploadPopup from '../../components/popup/ExcelUploadPopup'; // Add this line
 import styles from '../../components/table/TableSearch.module.css';
 import { fetchData } from '../../utils/dataUtils';
@@ -112,6 +113,7 @@ const TabulatorDirect = () => {
   const [selectedOrg, setSelectedOrg] = useState(''); // 조직 선택 팝업용 상태
   const [status2Options, setStatus2Options] = useState(getFieldOptions('org2'));
   const [status3Options, setStatus3Options] = useState(getFieldOptions('org3'));
+  const [_selectedUsers, setSelectedUsers] = useState([]);
   const selectedOrgRef = useRef(selectedOrg); // 최신 selectedOrg 값을 추적
 
   // selectedOrg 변경 시 ref 업데이트
@@ -160,7 +162,9 @@ const TabulatorDirect = () => {
           { id: 'status', type: 'select', row: 1, label: '상태', labelVisible: true, options: getFieldOptions('status'), width: '150px', height: '30px', backgroundColor: '#ffffff', color: '#000000', enabled: true },
           { id: 'orgText', type: 'text', row: 2, label: '조직예제', labelVisible: true, placeholder: '조직 선택', width: '150px', height: '30px', backgroundColor: '#f0f0f0', color: '#000000', enabled: false },
           { id: 'orgPopupBtn', type: 'popupIcon', row: 2, label: '조직 선택', labelVisible: false, eventType: 'showOrgPopup', width: '30px', height: '30px', backgroundColor: '#f0f0f0', color: '#000000', enabled: true },
-          { id: 'testSearchBtn', type: 'button', row: 2, label: '버튼', labelVisible: false, eventType: 'testSearch', width: '80px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
+          { id: 'userText', type: 'text', row: 2, label: '사용자예제', labelVisible: true, placeholder: '사용자 선택', width: '150px', height: '30px', backgroundColor: '#f0f0f0', color: '#000000', enabled: false },
+          { id: 'userPopupBtn', type: 'popupIcon', row: 2, label: '사용자 선택', labelVisible: false, eventType: 'showUserPopup', width: '30px', height: '30px', backgroundColor: '#f0f0f0', color: '#000000', enabled: true },
+          { id: 'testSearchBtn', type: 'button', row: 2, label: '팝업', labelVisible: false, eventType: 'testSearch', width: '80px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
           { id: 'status1', type: 'select', row: 3, label: '드롭리스트예제', labelVisible: true, options: getFieldOptions('org1'), width: '150px', height: '30px', backgroundColor: '#ffffff', color: '#000000', enabled: true },
           { id: 'status2', type: 'select', row: 3, label: '드롭리스트예제', labelVisible: false, options: status2Options, width: '150px', height: '30px', backgroundColor: '#ffffff', color: '#000000', enabled: true },
           { id: 'status3', type: 'select', row: 3, label: '드롭리스트예제', labelVisible: false, options: status3Options, width: '150px', height: '30px', backgroundColor: '#ffffff', color: '#000000', enabled: true },
@@ -182,6 +186,7 @@ const TabulatorDirect = () => {
           { id: 'resetBtn', type: 'button', row: 8, label: '초기화', eventType: 'reset', width: '80px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
           { id: 'popupBtn2', type: 'button', row: '8', label: '팝업 버튼', eventType: 'showPopup', width: '100px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
           { id: 'excelUploadBtn', type: 'button', row: '8', label: '엑셀업로드', eventType: 'showExcelUploadPopup', width: '100px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
+          { id: 'tempUploadBtn', type: 'button', row: '8', label: '파일업로드기능은(ExcelUploadTemplateManage.jsx참조)', eventType: 'showTempUploadPopup', width: '400px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
         ],
       },
     ],
@@ -307,6 +312,7 @@ const TabulatorDirect = () => {
       setSelectedOrg('');
       setStatus2Options(getFieldOptions('org2'));
       setStatus3Options(getFieldOptions('org3'));
+      setSelectedUsers([]); // Added: Reset selected users on reset
     } else if (eventType === 'showPopup') {
       setPopupTitle('팝업');
       setPopupContent(`ID: ${eventData.id}에서 호출됨`);
@@ -335,7 +341,28 @@ const TabulatorDirect = () => {
         return true;
       });
       setShowPopup(true);
-    } else if (eventType === 'testSearch') {
+    } else if (eventType === 'showUserPopup') {
+      setPopupTitle('사용자 선택');
+      setPopupContent(
+        <div>
+          <UserSearchPopup
+            onClose={() => setShowPopup(false)}
+            onConfirm={(selectedRows) => {
+              setSelectedUsers(selectedRows);
+              const userNames = selectedRows.map(row => row.EMPNM).join(', ');
+              setFilters((prev) => ({ ...prev, userText: userNames || '' }));
+              console.log('Selected Users:', selectedRows);
+            }}
+          />
+        </div>
+      );
+      setPopupOnConfirm(() => () => {
+        setShowPopup(false);
+        return true;
+      });
+      setShowPopup(true);
+    }
+    else if (eventType === 'testSearch') {
       setPopupTitle('테스트');
       setPopupContent('테스트 버튼이 클릭되었습니다.');
       setPopupOnConfirm(() => () => {
@@ -374,9 +401,34 @@ const TabulatorDirect = () => {
       }
       try {
         // Tabulator 테이블 생성
-        tableInstance.current = createTable(tableRef.current, columns, [], {});
+        //1.테블레이터 기본 속성으로 호출 시
+        //tableInstance.current = createTable(tableRef.current, columns, [], {});
+        //2.테블레이터 기본 옵션을 수정 시
+        //tableConfig.js 의 defaultOptions 선언 값을 override 설정 변경
+        tableInstance.current = createTable(tableRef.current, columns, [], {
+          headerHozAlign: "center",
+          headerFilter: true,
+          layout: 'fitColumns'
+        });
+
         if (!tableInstance.current) throw new Error("createTable returned undefined or null");
         setTableStatus("ready");
+
+        //3.테블레이터 이벤트 사용 아래 처럼
+        //rowClick, rowDblClick, cellClick, cellDblClick, 사이트 참조 ....
+        tableInstance.current.on("rowClick", (e, row) => {
+          const rowData = row.getData();
+          console.log("rowClick:", rowData);
+        });
+
+        tableInstance.current.on("cellDblClick", (e, cell) => {
+          console.log("cellDblClick:", cell.getField(), cell.getValue());
+        });
+
+        //4.그리드내에 체크박스 이벤트 등은 UserSearchPopup.jsx 이 파일 참조
+        //tableInstance.current.updateData 기능 등으로 처리해야 그리드내에 값들 즉시 적용됨.
+
+
       } catch (err) {
         setTableStatus("error");
         console.error("테이블 초기화 실패패:", err.message);
