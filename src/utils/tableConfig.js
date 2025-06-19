@@ -83,6 +83,11 @@ export function createTable(element, cols, data, customOptions = {}) {
     columnMoved: (column, columns) => {
       console.log('Column moved:', column.getField(), columns.map(col => col.getField()));
     },                               // 열 이동 시 호출. 이동된 열과 전체 열 배열 로깅
+
+    columnDefaults:{
+        tooltip:true,                // 툴팁 (데이터 값을 툴팁으로 표시하려면 true)
+        cssClass: "",                // 컬럼 및 데이터 셀에 적용할 CSS 클래스 ("" - 기본 없음)
+    }
   };
 
   // 사용자 정의 옵션과 기본 옵션 병합

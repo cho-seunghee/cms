@@ -8,6 +8,7 @@ import MainSearch from '../../components/main/MainSearch';
 import TableSearch from '../../components/table/TableSearch';
 import CommonPopup from '../../components/popup/CommonPopup';
 import UserSearchPopup from '../../components/popup/UserSearchPopup';
+import OrgSearchPopup from '../../components/popup/OrgSearchPopup';
 import ExcelUploadPopup from '../../components/popup/ExcelUploadPopup'; // Add this line
 import styles from '../../components/table/TableSearch.module.css';
 import { fetchData } from '../../utils/dataUtils';
@@ -60,41 +61,6 @@ const getFieldOptions = (fieldId, dependentValue = '') => {
     ],
   };
   return optionsMap[fieldId] || [];
-};
-
-/**
- * 조직 선택 팝업 컨텐츠 컴포넌트
- * @param {Object} props - 컴포넌트 속성
- * @param {string} initialOrg - 초기 조직 값
- * @param {Function} onSelect - 선택 시 호출되는 콜백
- * @returns {JSX.Element} 드롭다운 컨텐츠
- */
-const OrgSelectContent = ({ initialOrg, onSelect }) => {
-  const [selectedOrg, setSelectedOrg] = useState(initialOrg);
-
-  useEffect(() => {
-    setSelectedOrg(initialOrg); // 초기값 변경 시 업데이트
-  }, [initialOrg]);
-
-  return (
-    <div>
-      <label htmlFor="orgSelect">조직 선택: </label>
-      <select
-        id="orgSelect"
-        value={selectedOrg}
-        onChange={(e) => {
-          setSelectedOrg(e.target.value);
-          onSelect(e.target.value);
-        }}
-      >
-        {getFieldOptions('orgSelect').map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
 };
 
 /**
@@ -322,19 +288,19 @@ const TabulatorDirect = () => {
     } else if (eventType === 'showOrgPopup') {
       setPopupTitle('조직 선택');
       setPopupContent(
-        <OrgSelectContent
-          initialOrg={selectedOrg}
-          onSelect={(value) => setSelectedOrg(value)}
-        />
+        <div>
+          <OrgSearchPopup
+            onClose={() => setShowPopup(false)}
+            onConfirm={(selectedRows) => {
+              const orgNames = selectedRows.map(row => row.ORGNM).join(', ');
+              setSelectedOrg(selectedRows.length > 0 ? selectedRows[0].ORGCD : ''); // Store ORGCD or empty string
+              setFilters((prev) => ({ ...prev, orgText: orgNames || '' }));
+              console.log('Selected Organizations:', selectedRows);
+            }}
+          />
+        </div>
       );
       setPopupOnConfirm(() => () => {
-        const currentSelectedOrg = selectedOrgRef.current;
-        if (currentSelectedOrg) {
-          const selectedOption = getFieldOptions('orgSelect').find(
-            (option) => option.value === currentSelectedOrg
-          );
-          setFilters((prev) => ({ ...prev, orgText: selectedOption ? selectedOption.label : '' }));
-        }
         setShowPopup(false);
         return true;
       });
