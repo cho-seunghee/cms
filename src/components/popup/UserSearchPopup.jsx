@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import MainSearch from "../main/MainSearch";
 import { fetchData } from "../../utils/dataUtils";
-import api from '../../utils/api';
-import common from "../../utils/common";
 import { createTable } from "../../utils/tableConfig";
 import { errorMsgPopup } from '../../utils/errorMsgPopup';
 import styled from 'styled-components';
@@ -160,14 +158,13 @@ const UserSearchPopup = ({ onClose, onConfirm }) => {
   try {
       const params = {pGUBUN: filters.searchField || "", pSEARCH: filters.searchText || "", pDEBUG: "F"};
 
-      const response = await fetchData(api, `${common.getServerUrl("common/userinfo/list")}`, params);
+      const response = await fetchData("common/userinfo/list", params);
       if (!response.success) {
         errorMsgPopup(response.message || "데이터를 가져오는 중 오류가 발생했습니다.");
         setData([]);
         return;
       }
       if (response.errMsg !== "") {
-        errorMsgPopup(response.errMsg);
         setData([]);
         return;
       }

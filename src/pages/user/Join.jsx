@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import commonUtils from '../../utils/common.js';
 import { fetchData } from '../../utils/dataUtils';
-import api from '../../utils/api';
-import common from '../../utils/common';
 import { msgPopup } from '../../utils/msgPopup';
 import { errorMsgPopup } from '../../utils/errorMsgPopup';
 import styles from './Join.module.css';
@@ -94,11 +92,7 @@ const Join = ({ show, onHide }) => {
     };
 
     try {
-      const response = await fetchData(
-        api,
-        `${common.getServerUrl('auth/join/save')}`,
-        userData
-      );
+      const response = await fetchData('auth/join/save', userData);
 
       if (!response.success) {
         throw new Error(response.errMsg || '가입정보가 잘못되었습니다.');
@@ -151,6 +145,22 @@ const Join = ({ show, onHide }) => {
                     />
                   </div>
                   <div className={styles.formGroup}>
+                    <label htmlFor="empNm" className="form-label">
+                      <i className="bi bi-person-fill me-2"></i>이름 <i className="bi bi-asterisk text-danger"></i>
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      id="empNm"
+                      value={empNm}
+                      onChange={(e) => setEmpNm(e.target.value)}
+                      required
+                      placeholder="이름을 입력하세요"
+                    />
+                  </div>
+                </div>
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
                     <label htmlFor="empPwd" className="form-label">
                       <i className="bi bi-lock me-2"></i>비밀번호 <i className="bi bi-asterisk text-danger"></i>
                     </label>
@@ -175,23 +185,11 @@ const Join = ({ show, onHide }) => {
                       value={confirmPwd}
                       onChange={(e) => setConfirmPwd(e.target.value)}
                       required
-                      placeholder="비밀번호를 다시 입력하세요"
+                      placeholder="비밀번호를 입력하세요"
                     />
                   </div>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="empNm" className="form-label">
-                      <i className="bi bi-person-fill me-2"></i>이름 <i className="bi bi-asterisk text-danger"></i>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      id="empNm"
-                      value={empNm}
-                      onChange={(e) => setEmpNm(e.target.value)}
-                      required
-                      placeholder="이름을 입력하세요"
-                    />
-                  </div>
+                </div>
+                <div className={styles.formRow}>
                   <div className={styles.formGroup}>
                     <label htmlFor="phone" className="form-label">
                       <i className="bi bi-telephone me-2"></i>전화번호
@@ -214,11 +212,13 @@ const Join = ({ show, onHide }) => {
                       className="form-control"
                       id="mobile"
                       value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
+                      onChange={(e) => setMobile(e.target.value)} // Fixed typo: setPhone -> setMobile
                       required
                       placeholder="(예: 010-1234-5678)"
                     />
                   </div>
+                </div>
+                <div className={styles.formRow}>
                   <div className={styles.formGroup}>
                     <label htmlFor="email" className="form-label">
                       <i className="bi bi-envelope me-2"></i>이메일 <i className="bi bi-asterisk text-danger"></i>
@@ -232,6 +232,9 @@ const Join = ({ show, onHide }) => {
                       required
                       placeholder="이메일을 입력하세요"
                     />
+                  </div>
+                  <div className={styles.formGroup}>
+                    {/* Empty div to maintain layout balance */}
                   </div>
                 </div>
                 <button type="submit" className={`${styles.btn} w-100 mt-3`}>

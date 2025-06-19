@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import useStore from '../../store/store';
 import { checkTokenValidity } from '../../utils/authUtils';
 import { fetchData } from '../../utils/dataUtils';
-import common from "../../utils/common";
-import api from '../../utils/api';
 import styles from './MainLayout.module.css';
 
 const MainHeader = () => {
@@ -32,7 +30,7 @@ const MainHeader = () => {
     setLogout(true);
     try {
       // Assume backend clears the HTTP-only cookie via logout endpoint
-      await fetchData(api, common.getServerUrl('auth/logout'), {});
+      await fetchData('auth/logout', {});
       clearUser();
       if (clearMenu) {
         clearMenu();

@@ -91,11 +91,18 @@
 .formRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 15px;
-  align-items: center;
+  gap: 20px; /* Increased gap for better spacing */
+  margin-bottom: 15px; /* Added margin for row separation */
 }
 
 .formGroup {
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 calc(50% - 10px); /* Each field takes ~50% width minus half the gap */
+  min-width: 200px; /* Maintain minimum width for smaller screens */
+  box-sizing: border-box; /* Ensure padding/margins don't affect width */
+}
+
+@media (max-width: 600px) {
+  .formGroup {
+    flex: 1 1 100%; /* Stack fields vertically on small screens */
+  }
 }

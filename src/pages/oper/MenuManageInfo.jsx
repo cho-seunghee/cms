@@ -10,7 +10,6 @@ import { initialFilters } from "../../utils/tableEvent";
 import { handleDownloadExcel } from "../../utils/tableExcel";
 import styles from "../../components/table/TableSearch.module.css";
 import { fetchData } from "../../utils/dataUtils";
-import api from "../../utils/api";
 import common from "../../utils/common";
 import { errorMsgPopup } from "../../utils/errorMsgPopup";
 import { msgPopup } from "../../utils/msgPopup";
@@ -200,18 +199,13 @@ const MenuManageInfo = () => {
         USEYN: filters.USEYN || "",
         DEBUG: "F"
       };
-      const response = await fetchData(
-        api,
-        `${common.getServerUrl("oper/menumng/list")}`,
-        params
-      );
+      const response = await fetchData("oper/menumng/list", params );
       if (!response.success) {
         errorMsgPopup(response.message || "메뉴 데이터를 가져오는 중 오류가 발생했습니다.");
         setData([]);
         return;
       }
       if (response.errMsg !== "") {
-        errorMsgPopup(response.errMsg);
         setData([]);
         return;
       }
@@ -465,11 +459,7 @@ const MenuManageInfo = () => {
           pUSEYN: row.USEYN || "Y",
         };
         try {
-          const response = await fetchData(
-            api,
-            `${common.getServerUrl("oper/menumng/save")}`,
-            params
-          );
+          const response = await fetchData("oper/menumng/save", params );
           if (!response.success) {
             throw new Error(response.message || `Failed to ${pGUBUN} menu ${row.MENUID}`);
           }

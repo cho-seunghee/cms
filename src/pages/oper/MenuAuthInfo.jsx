@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
 import { fetchData } from "../../utils/dataUtils";
-import common from "../../utils/common";
 import useStore from '../../store/store';
 import { hasPermission } from '../../utils/authUtils';
 import { errorMsgPopup } from "../../utils/errorMsgPopup";
@@ -38,11 +36,7 @@ const MenuAuthInfo = () => {
   const fetchMenuAuthData = async () => {
     const params = { param1: "F" };
     try {
-      const response = await fetchData(
-        api,
-        `${common.getServerUrl("oper/menuauthinfo/list")}`,
-        params
-      );
+      const response = await fetchData("oper/menuauthinfo/list", params );
 
       if (!response.success) {
         errorMsgPopup(response.message || "메뉴 권한 데이터를 가져오는 중 오류가 발생했습니다.");
@@ -258,11 +252,7 @@ const MenuAuthInfo = () => {
         };
 
         try {
-          const response = await fetchData(
-            api,
-            `${common.getServerUrl("oper/menuauthinfo/save")}`,
-            params
-          );
+          const response = await fetchData("oper/menuauthinfo/save", params );
 
           if (!response.success) {
             throw new Error(response.message || `Failed to update menu auth ${item.pMENUID}-${item.pAUTHID}`);

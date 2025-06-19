@@ -1,11 +1,9 @@
 import { fetchData } from '../utils/dataUtils';
-import common from '../utils/common';
 import useStore from '../store/store';
-import api from '../utils/api';
 
 export const performLogin = async (gubun, empNo, empPwd, navigate, setError) => {
   try {
-    const response = await fetchData(api, common.getServerUrl('auth/login'), { empNo, empPwd });
+    const response = await fetchData('auth/login', { empNo, empPwd });
     
     if (!response.success) {
       throw new Error(response.errMsg || '아이디 또는 비밀번호가 잘못되었습니다.');

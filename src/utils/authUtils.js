@@ -1,6 +1,4 @@
 import { fetchDataGet } from './dataUtils';
-import common from './common';
-import api from './api';
 
 // Default read permissions for all pages
 const DEFAULT_READ_PERMISSIONS = ['AUTH0001', 'AUTH0002', 'AUTH0003', 'AUTH0004', 'AUTH0005', 'AUTH0006', 'AUTH0007', '', null];
@@ -24,11 +22,7 @@ export function hasPermission(userAuth, screen) {
 
 export async function checkTokenValidity(navigate, user, setUser, clearUser) {
   try {
-    const response = await fetchDataGet(
-      api,
-      common.getServerUrl('auth/live'),
-      { extend: true }
-    );
+    const response = await fetchDataGet('auth/live', { extend: true } );
 
     if (response.success) {
       setUser({
@@ -49,11 +43,7 @@ export async function checkTokenValidity(navigate, user, setUser, clearUser) {
 
 export async function checkTokenValiditySimple(clearUser) {
   try {
-    const response = await fetchDataGet(
-      api,
-      common.getServerUrl('auth/check'),
-      {}
-    );
+    const response = await fetchDataGet('auth/check', {} );
     return response.success;
   } catch (error) {
     console.error('Simple token check failed:', error.message);

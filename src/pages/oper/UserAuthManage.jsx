@@ -9,8 +9,6 @@ import { handleDownloadExcel } from "../../utils/tableExcel";
 import styles from "../../components/table/TableSearch.module.css";
 import CommonPopup from "../../components/popup/CommonPopup";
 import { fetchData } from "../../utils/dataUtils";
-import api from "../../utils/api";
-import common from "../../utils/common";
 import { errorMsgPopup } from "../../utils/errorMsgPopup";
 import { msgPopup } from "../../utils/msgPopup";
 
@@ -71,7 +69,7 @@ const UserAuthManage = () => {
       setLoading(true);
       try {
         const params = { pGUBUN: "AUTHINFO", pSEARCH: "", pDEBUG: "F" };
-        const response = await fetchData(api, `${common.getServerUrl("oper/usermng/list")}`, params);
+        const response = await fetchData("oper/usermng/list", params);
         if (!response.success) {
           errorMsgPopup(response.message || "권한 데이터를 가져오는 중 오류가 발생했습니다.");
           setAuthList([]);
@@ -202,14 +200,13 @@ const UserAuthManage = () => {
     setIsSearched(true);
     try {
       const params = { pGUBUN: filters.GU || "ALL", pSEARCH: filters.searchText || "", pDEBUG: "F" };
-      const response = await fetchData(api, `${common.getServerUrl("oper/usermng/list")}`, params);
+      const response = await fetchData("oper/usermng/list", params);
       if (!response.success) {
         errorMsgPopup(response.message || "사용자 데이터를 가져오는 중 오류가 발생했습니다.");
         setData([]);
         return;
       }
       if (response.errMsg !== "") {
-        errorMsgPopup(response.errMsg);
         setData([]);
         return;
       }
@@ -256,7 +253,7 @@ const UserAuthManage = () => {
       const promises = changedRows.map(async (row) => {
         const params = { pGUBUN: "I", pEMPNO: row.EMPNO, pAUTHID: row.AUTHID };
         try {
-          const response = await fetchData(api, `${common.getServerUrl("oper/usermng/save")}`, params);
+          const response = await fetchData("oper/usermng/save", params);
           if (!response.success) throw new Error(response.message || `Failed to update user ${row.EMPNO}`);
           return { ...row, success: true };
         } catch (error) {

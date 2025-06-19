@@ -9,7 +9,6 @@ import { handleDownloadExcel } from "../../utils/tableExcel";
 import styles from "../../components/table/TableSearch.module.css";
 import CommonPopup from "../../components/popup/CommonPopup";
 import { fetchData, fetchFileUpload } from "../../utils/dataUtils";
-import api from "../../utils/api";
 import common from "../../utils/common";
 import { errorMsgPopup } from "../../utils/errorMsgPopup";
 import { msgPopup } from "../../utils/msgPopup";
@@ -265,14 +264,13 @@ const ExcelUploadTemplateManage = () => {
     setIsSearched(true);
     try {
       const params = { pGUBUN: "LIST", pTITLE: filters.searchText || "", pFILEID: "", pRPTCD: "", pDEBUG: "F" };
-      const response = await fetchData(api, `${common.getServerUrl("excelupload/template/filelist")}`, params);
+      const response = await fetchData("excelupload/template/filelist", params);
       if (!response.success) {
         errorMsgPopup(response.message || "데이터를 가져오는 중 오류가 발생했습니다.");
         setData([]);
         return;
       }
       if (response.errMsg !== "") {
-        errorMsgPopup(response.errMsg);
         setData([]);
         return;
       }
@@ -301,7 +299,7 @@ const ExcelUploadTemplateManage = () => {
       formData.append("files", file);
     });
     try {
-      const result = await fetchFileUpload(api, common.getServerUrl("excelupload/template/fileupload"), formData);
+      const result = await fetchFileUpload("excelupload/template/fileupload", formData);
       if (result.errCd !== "00") {
         return { error: result.errMsg || "파일 업로드 실패" };
       }
@@ -357,11 +355,7 @@ const ExcelUploadTemplateManage = () => {
         };
 
         try {
-          const response = await fetchData(
-            api,
-            `${common.getServerUrl("excelupload/template/filesave")}`,
-            params
-          );
+          const response = await fetchData("excelupload/template/filesave", params );
           if (!response.success) {
             throw new Error(response.message || `Failed to ${pGUBUN} file ${row.FILEID}`);
           }

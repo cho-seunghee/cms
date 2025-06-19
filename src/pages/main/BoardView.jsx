@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { fetchData } from '../../utils/dataUtils';
-import common from '../../utils/common';
-import api from '../../utils/api';
 import { errorMsgPopup } from '../../utils/errorMsgPopup';
 import styles from './Board.module.css';
 import { hasPermission } from '../../utils/authUtils';
@@ -38,11 +36,7 @@ const BoardView = () => {
   useEffect(() => {
     const fetchNoticeDetails = async () => {
       try {
-        const result = await fetchData(api, common.getServerUrl('notice/list'), {
-          gubun: 'DETAIL',
-          noticeId: notice.id,
-          debug: 'F',
-        });
+        const result = await fetchData('notice/list', {gubun: 'DETAIL', noticeId: notice.id, debug: 'F', });
         if (result.errCd === '00' && result.data.length > 0) {
           const detail = {
             id: result.data[0].NOTICEID,
@@ -66,12 +60,7 @@ const BoardView = () => {
 
     const fetchFiles = async () => {
       try {
-        const result = await fetchData(api, common.getServerUrl('notice/filelist'), {
-          gubun: 'LIST',
-          noticeId: notice.id,
-          fileId: '',
-          debug: 'F',
-        });
+        const result = await fetchData('notice/filelist', {gubun: 'LIST', noticeId: notice.id, fileId: '', debug: 'F', });
         if (result.errCd === '00') {
           const mappedFiles = result.data.map((file) => ({
             fileId: file.FILEID,
@@ -101,12 +90,7 @@ const BoardView = () => {
 
   const handleFileClick = async (file) => {
     try {
-      const result = await fetchData(api, common.getServerUrl('notice/filelist'), {
-        gubun: 'DETAIL',
-        noticeId: notice.id || '',
-        fileId: file.fileId,
-        debug: 'F',
-      });
+      const result = await fetchData('notice/filelist', {gubun: 'DETAIL', noticeId: notice.id || '', fileId: file.fileId, debug: 'F', });
       if (result.errCd === '00' && result.data.length > 0) {
         const extension = fileUtils.getFileExtension(result.data[0].FILENM)?.toLowerCase();
         const mimeType = fileUtils.mimeTypes[extension] || 'application/octet-stream';
@@ -139,12 +123,7 @@ const BoardView = () => {
 
   const handleDownload = async (file) => {
     try {
-      const result = await fetchData(api, common.getServerUrl('notice/filelist'), {
-        gubun: 'DETAIL',
-        noticeId: notice.id || '',
-        fileId: file.fileId,
-        debug: 'F',
-      });
+      const result = await fetchData('notice/filelist', {gubun: 'DETAIL', noticeId: notice.id || '', fileId: file.fileId, debug: 'F', });
       if (result.errCd === '00' && result.data.length > 0) {
         const fileData = result.data[0].FILEDATA;
         const mimeType = fileUtils.mimeTypes[fileUtils.getFileExtension(file.fileName)] || 'application/octet-stream';

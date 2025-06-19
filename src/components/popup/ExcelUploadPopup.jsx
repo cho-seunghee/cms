@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { fetchFileUpload, fetchData } from '../../utils/dataUtils';
 import fileUtils from '../../utils/fileUtils';
-import api from '../../utils/api';
-import common from '../../utils/common';
 import styles from "./ExcelUploadPopup.module.css";
 
 const ExcelUploadPopup = ({ show, onHide, title, rptCd, templateParams }) => {
@@ -28,7 +26,7 @@ const ExcelUploadPopup = ({ show, onHide, title, rptCd, templateParams }) => {
 
   const handleDownload = async () => {
     try {
-      const result = await fetchData(api, common.getServerUrl("excelupload/template/filelist"), templateParams);
+      const result = await fetchData("excelupload/template/filelist", templateParams);
       if (result.errCd === '00' && result.data && result.data[0].FILEDATA.length > 0) {
         const fileData = result.data[0].FILEDATA;
         const fileName = result.data[0].FILENM || 'template.xlsx';
@@ -61,7 +59,7 @@ const ExcelUploadPopup = ({ show, onHide, title, rptCd, templateParams }) => {
       const formData = new FormData();
       formData.append("rptCd", rptCd);
       formData.append("file", file);
-      const result = await fetchFileUpload(api, common.getServerUrl("excelupload/save"), formData);
+      const result = await fetchFileUpload("excelupload/save", formData);
       if (result.errCd !== '00') {
         setToastMessage(result.errMsg || "엑셀 업로드 실패");
         setShowToast(true);

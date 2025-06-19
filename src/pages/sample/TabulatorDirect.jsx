@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createTable } from '../../utils/tableConfig';
 import { initialFilters } from '../../utils/tableEvent';
 import { handleDownloadExcel } from '../../utils/tableExcel';
-import common from "../../utils/common";
 import MainSearch from '../../components/main/MainSearch';
 import TableSearch from '../../components/table/TableSearch';
 import CommonPopup from '../../components/popup/CommonPopup';
@@ -12,7 +11,6 @@ import UserSearchPopup from '../../components/popup/UserSearchPopup';
 import ExcelUploadPopup from '../../components/popup/ExcelUploadPopup'; // Add this line
 import styles from '../../components/table/TableSearch.module.css';
 import { fetchData } from '../../utils/dataUtils';
-import api from '../../utils/api';
 import { errorMsgPopup } from '../../utils/errorMsgPopup';
 
 /**
@@ -186,7 +184,7 @@ const TabulatorDirect = () => {
           { id: 'resetBtn', type: 'button', row: 8, label: '초기화', eventType: 'reset', width: '80px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
           { id: 'popupBtn2', type: 'button', row: '8', label: '팝업 버튼', eventType: 'showPopup', width: '100px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
           { id: 'excelUploadBtn', type: 'button', row: '8', label: '엑셀업로드', eventType: 'showExcelUploadPopup', width: '100px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
-          { id: 'tempUploadBtn', type: 'button', row: '8', label: '파일업로드기능은(ExcelUploadTemplateManage.jsx참조)', eventType: 'showTempUploadPopup', width: '400px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
+          { id: 'tempUploadBtn', type: 'button', row: '9', label: 'common 팝업 버튼 및 이벤트 및 comfirm메시지 및 파일업로드기능 예제(ExcelUploadTemplateManage.jsx참조)', eventType: 'showTempUploadPopup', width: '680px', height: '30px', backgroundColor: '#00c4b4', color: '#ffffff', enabled: true },
         ],
       },
     ],
@@ -246,14 +244,14 @@ const TabulatorDirect = () => {
     try {
       const params = {pGUBUN: 'LIST', pNAME: currentFilters.name || '',pSTATUS: currentFilters.status || '', pDEBUG: "F"};
 
-      const response = await fetchData(api, `${common.getServerUrl("sample/tabulator/list")}`, params);
+      const response = await fetchData("sample/tabulator/list", params);
       if (!response.success) {
         errorMsgPopup(response.message || "데이터를 가져오는 중 오류가 발생했습니다.");
         setData([]);
         return;
       }
       if (response.errMsg !== "") {
-        errorMsgPopup(response.errMsg);
+        console.log(response.errMsg);
         setData([]);
         return;
       }

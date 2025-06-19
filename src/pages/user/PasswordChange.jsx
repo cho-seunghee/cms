@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import commonUtils from '../../utils/common.js';
 import { fetchData } from '../../utils/dataUtils';
-import api from '../../utils/api';
-import common from '../../utils/common';
 import { msgPopup } from '../../utils/msgPopup';
 import styles from './Join.module.css';
 
@@ -65,11 +63,7 @@ const PasswordChange = ({ show, onHide, initialEmpNo, isEditable }) => {
           pDEBUG: "F"
         };
 
-      const checkResponse = await fetchData(
-        api,
-        `${common.getServerUrl('auth/password/list')}`,
-        params
-      );
+      const checkResponse = await fetchData('auth/password/list', params );
 
       if (!checkResponse.success || !checkResponse.data) {
         setError("입력한 비밀번호와 현재 비밀번호가 다릅니다.");
@@ -83,11 +77,7 @@ const PasswordChange = ({ show, onHide, initialEmpNo, isEditable }) => {
         pEMPPWD: newPwd
       };
 
-      const saveResponse = await fetchData(
-        api,
-        `${common.getServerUrl('auth/password/save')}`,
-        userData
-      );
+      const saveResponse = await fetchData('auth/password/save', userData );
 
       if (!saveResponse.success) {
         throw new Error(saveResponse.errMsg || '비밀번호 변경에 실패했습니다.');
@@ -174,7 +164,7 @@ const PasswordChange = ({ show, onHide, initialEmpNo, isEditable }) => {
                       value={confirmPwd}
                       onChange={(e) => setConfirmPwd(e.target.value)}
                       required
-                      placeholder="새 비밀번호를 다시 입력하세요"
+                      placeholder="새 비밀번호를 입력하세요"
                     />
                   </div>
                 </div>

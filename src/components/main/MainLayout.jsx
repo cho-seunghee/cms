@@ -7,8 +7,6 @@ import MainFooter from './MainFooter';
 import useStore from '../../store/store';
 import { fetchData } from '../../utils/dataUtils';
 import { hasPermission, checkTokenValiditySimple } from '../../utils/authUtils';
-import common from '../../utils/common';
-import api from '../../utils/api.js';
 import styles from './MainLayout.module.css';
 import logo from '../../assets/images/logo.png';
 
@@ -47,11 +45,7 @@ const MainLayout = () => {
       // Fetch menu if needed
       if (!menu?.length && user?.empNo) {
         try {
-          const response = await fetchData(
-            api,
-            common.getServerUrl('auth/menu'),
-            { userId: user.empNo }
-          );
+          const response = await fetchData('auth/menu', { userId: user.empNo });
           if (response.success && response.data?.length > 0) {
             setMenu(response.data);
           }

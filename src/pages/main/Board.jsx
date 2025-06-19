@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchData } from '../../utils/dataUtils';
-import common from '../../utils/common';
-import api from '../../utils/api';
 import styles from './Board.module.css';
 
 const Board = ({ canWriteBoard }) => {
@@ -20,7 +18,7 @@ const Board = ({ canWriteBoard }) => {
         debug: 'F',
       };
       try {
-        const result = await fetchData(api, common.getServerUrl('notice/list'), params);
+        const result = await fetchData('notice/list', params);
         if (result.errCd === '00') {
           const mappedNotices = result.data.map((item) => ({
             id: item.NOTICEID,

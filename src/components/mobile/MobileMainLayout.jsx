@@ -3,8 +3,6 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import useStore from '../../store/store';
 import { checkTokenValiditySimple } from '../../utils/authUtils';
 import { fetchData } from '../../utils/dataUtils';
-import common from '../../utils/common';
-import api from '../../utils/api';
 import logo from '../../assets/images/logo.png';
 import styles from './MobileMainLayout.module.css';
 
@@ -27,7 +25,7 @@ const MobileMainLayout = () => {
   const handleLogout = async () => {
     try {
       // Assume backend clears the HTTP-only cookie via logout endpoint
-      await fetchData(api, common.getServerUrl('auth/logout'), {});
+      await fetchData('auth/logout', {});
       clearUser();
       navigate('/mobile/Login', { replace: true });
     } catch (error) {

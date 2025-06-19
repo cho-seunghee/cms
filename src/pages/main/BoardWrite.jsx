@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from 'react-router-dom';
-import api from '../../utils/api';
 import { fetchData, fetchFileUpload } from "../../utils/dataUtils";
-import common from "../../utils/common";
 import useStore from '../../store/store';
 import { hasPermission } from '../../utils/authUtils';
 import { errorMsgPopup } from "../../utils/errorMsgPopup";
@@ -83,7 +81,7 @@ const BoardWrite = () => {
         noticeId: String(state.notice.id)
       };
 
-      const deleteResponse = await fetchData(api, `${common.getServerUrl("notice/filedelete")}`, payload);
+      const deleteResponse = await fetchData("notice/filedelete", payload);
 
       if (deleteResponse.errCd !== '00') {
         throw new Error(deleteResponse.errMsg || "파일 삭제 실패");
@@ -146,7 +144,7 @@ const BoardWrite = () => {
         content,
       };
 
-      const saveResponse = await fetchData(api, `${common.getServerUrl("notice/save")}`, payload);
+      const saveResponse = await fetchData("notice/save", payload);
 
       if (saveResponse.errCd !== '00') {
         throw new Error(saveResponse.errMsg || "공지사항 저장 실패");
@@ -165,7 +163,7 @@ const BoardWrite = () => {
           formData.append("files", file);
         });
 
-        const uploadResponse = await fetchFileUpload(api, `${common.getServerUrl("notice/filesave")}`, formData);
+        const uploadResponse = await fetchFileUpload("notice/filesave", formData);
 
         if (uploadResponse.errCd !== '00') {
           throw new Error(uploadResponse.errMsg || "파일 업로드 실패");
@@ -203,7 +201,7 @@ const BoardWrite = () => {
         content: content || '',
       };
 
-      const deleteResponse = await fetchData(api, `${common.getServerUrl("notice/save")}`, payload);
+      const deleteResponse = await fetchData("notice/save", payload);
       if (deleteResponse.errCd !== '00') {
         throw new Error(deleteResponse.errMsg || "공지사항 삭제 실패");
       }
