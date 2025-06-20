@@ -293,9 +293,9 @@ const TabulatorDirect = () => {
             onClose={() => setShowPopup(false)}
             onConfirm={(selectedRows) => {
               const orgNames = selectedRows.map(row => row.ORGNM).join(', ');
-              setSelectedOrg(selectedRows.length > 0 ? selectedRows[0].ORGCD : ''); // Store ORGCD or empty string
+              setSelectedOrg(selectedRows.length > 0 ? selectedRows[0].ORGCD : '');
               setFilters((prev) => ({ ...prev, orgText: orgNames || '' }));
-              console.log('Selected Organizations:', selectedRows);
+              console.log('Selected Organizations in TabulatorDirect:', selectedRows); // 추가된 디버깅 로그
             }}
           />
         </div>

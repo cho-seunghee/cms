@@ -5,9 +5,9 @@ import { errorMsgPopup } from '../../utils/errorMsgPopup';
 import styled from 'styled-components';
 import styles from "./OrgSearchPopup.module.css";
 import useStore from '../../store/store';
-import { fetchJsonData } from '../../utils/dataUtils';
+import { fetchData } from '../../utils/dataUtils';
+import { updateChildrenRecursive } from '../../utils/tableUtils';
 import { convertOrgInfoToHierarchy } from '../../utils/hierarchyJsonUtils';
-import orgInfo from '../../data/orgInfo.json';
 
 const TableWrapper = styled.div`
   .tabulator-header .tabulator-col {
@@ -30,7 +30,7 @@ const OrgSearchPopup = ({ onClose, onConfirm }) => {
   const [isOpen, setIsOpen] = useState(false);
   const tableRef = useRef(null);
   const tableInstance = useRef(null);
-  const [filters, setFilters] = useState({ searchField: "ORG", mdate: new Date().toISOString().slice(0, 7).replace('-', ''), searchText: "" });
+  const [filters, setFilters] = useState({ searchField: "EMPNO", mdate: new Date().toISOString().slice(0, 7).replace('-', ''), searchText: "" });
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [tableStatus, setTableStatus] = useState("initializing");
@@ -58,15 +58,12 @@ const OrgSearchPopup = ({ onClose, onConfirm }) => {
       try {
         tableInstance.current = createTable(tableRef.current, [
         { headerHozAlign: "center", hozAlign: "left", title: "조직명", field: "ORGNM", sorter: "string", width: 200, frozen: true, responsive:0},
-        { 
-          frozen: true, 
-          headerHozAlign: "center", 
-          hozAlign: "center", 
-          title: "작업", 
-          field: "select", 
-          width: 80, 
+        { frozen: true, headerHozAlign: "center", hozAlign: "center", title: "작업", field: "select", width: 80, 
           formatter: (cell) => {
             const rowData = cell.getRow().getData();
+            const seqKey = "seq";  // 노드 식별자
+            const selectKey = "select";  // 업데이트할 필드
+            const targetSeq = rowData[seqKey]; // 클릭된 row의 seq 값
             const div = document.createElement("div");
             div.style.display = "flex";
             div.style.alignItems = "center";
@@ -77,41 +74,43 @@ const OrgSearchPopup = ({ onClose, onConfirm }) => {
             checkbox.checked = rowData.select === "Y";
             checkbox.onclick = (e) => {
               e.stopPropagation();
-              const updates = tableInstance.current.getData().map((row) => ({
-                seq: row.seq,
-                select: row.seq === rowData.seq ? (row.select === "Y" ? "N" : "Y") : "N",
-              }));
-              try {
-                tableInstance.current.updateData(updates).catch((err) => {
-                  console.error("updateData failed:", err, updates);
-                });
-              } catch (err) {
-                console.error("updateData error:", err, updates);
-              }
+              const currentPage = tableInstance.current.getPage(); // 현재 페이지 번호 저장
+              const allRows = tableInstance.current.getData(); // 테이블 전체 데이터 가져오기
+
+              // "select" 상태 초기화 (모두 "N")
+              const updatedTreeData = allRows.map(row =>
+                  updateChildrenRecursive([row], seqKey, null, selectKey, "N")[0]
+              ).map(row =>
+                  updateChildrenRecursive([row], seqKey, targetSeq, selectKey, "Y")[0]
+              );
+              
+              tableInstance.current.setData(updatedTreeData); // 데이터를 새로 설정
+              tableInstance.current.setPage(currentPage); // 이전 페이지로 이동
             };
             const span = document.createElement("span");
             span.innerText = "선택";
             span.style.cursor = "pointer";
             span.onclick = (e) => {
               e.stopPropagation();
-              const updates = tableInstance.current.getData().map((row) => ({
-                seq: row.seq,
-                select: row.seq === rowData.seq ? (row.select === "Y" ? "N" : "Y") : "N",
-              }));
-              try {
-                tableInstance.current.updateData(updates).catch((err) => {
-                  console.error("updateData failed:", err, updates);
-                });
-              } catch (err) {
-                console.error("updateData error:", err, updates);
-              }
+              const currentPage = tableInstance.current.getPage(); // 현재 페이지 번호 저장
+              const allRows = tableInstance.current.getData(); // 테이블 전체 데이터 가져오기
+
+              // "select" 상태 초기화 (모두 "N")
+              const updatedTreeData = allRows.map(row =>
+                  updateChildrenRecursive([row], seqKey, null, selectKey, "N")[0]
+              ).map(row =>
+                  updateChildrenRecursive([row], seqKey, targetSeq, selectKey, "Y")[0]
+              );
+              
+              tableInstance.current.setData(updatedTreeData); // 데이터를 새로 설정
+              tableInstance.current.setPage(currentPage); // 이전 페이지로 이동
             };
             div.appendChild(checkbox);
             div.appendChild(span);
             return div;
           }
         },
-        { headerHozAlign: "center", hozAlign: "center", title: "순번", field: "seq", sorter: "number", width: 60, editable: false, formatter: (cell) => { const rowData = cell.getRow().getData(); return rowData.seq || ''; } },
+        { headerHozAlign: "center", hozAlign: "center", title: "순번", field: "seq", sorter: "number", width: 60, editable: false, formatter: (cell) => cell.getRow().getData().seq },
         { headerHozAlign: "center", hozAlign: "center", title: "조직코드", field: "ORGCD", sorter: "string", width: 100 },
         { headerHozAlign: "center", hozAlign: "center", title: "상위조직코드", field: "UPPERORGCD", sorter: "string", width: 120},
         { headerHozAlign: "center", hozAlign: "center", title: "조직레벨", field: "ORGLEVEL", sorter: "number", width: 80, responsive:4 },
@@ -121,25 +120,36 @@ const OrgSearchPopup = ({ onClose, onConfirm }) => {
         { headerHozAlign: "center", hozAlign: "center", title: "소속조직코드", field: "OWN_ORGCD", sorter: "string", width: 120, visible:false },
         { headerHozAlign: "center", hozAlign: "left", title: "소속조직", field: "OWN_ORGNM", sorter: "string", width: 120, visible:false },
       ], [], { 
-        height: '40vh', headerHozAlign: "center", headerFilter: true, layout: 'fitColumns', index: "seq",
+        height: '40vh', headerHozAlign: "center", headerFilter: true, layout: 'fitColumns', index: "seq", 
         dataTree: true,
-        dataTreeStartExpanded: true
+        dataTreeStartExpanded: true,
+        movableRows: false
       });
-        if (!tableInstance.current) throw new Error("createTable returned undefined or null");
+      if (!tableInstance.current) throw new Error("createTable returned undefined or null");
 
-        tableInstance.current.on("rowClick", (e, row) => {
-        const rowData = row.getData();
-        const updates = tableInstance.current.getData().map((row) => ({
-          seq: row.seq,
-          select: row.seq === rowData.seq ? (row.select === "Y" ? "N" : "Y") : "N",
-        }));
-        try {
-          tableInstance.current.updateData(updates).catch((err) => {
-            console.error("updateData failed:", err, updates);
-          });
-        } catch (err) {
-          console.error("updateData error:", err, updates);
-        }
+      // rowClick 이벤트 생성
+      tableInstance.current.on("rowClick", async (e, row) => {
+          try {
+                const rowData = row.getData(); // 클릭된 row의 데이터 가져오기
+                const seqKey = "seq";            // Primary Key (index)
+                const selectKey = "select";     // 업데이트 대상 필드
+                const targetSeq = rowData[seqKey]; // 클릭된 row의 seq 값
+                const currentPage = await tableInstance.current.getPage(); // 현재 페이지 번호 저장
+                const allRows = tableInstance.current.getData(); // 전체 데이터 가져오기
+
+                // "select" 상태 초기화 (모두 "N")
+                const updatedTreeData = allRows.map(row =>
+                    updateChildrenRecursive([row], seqKey, null, selectKey, "N")[0]
+                ).map(row =>
+                    updateChildrenRecursive([row], seqKey, targetSeq, selectKey, "Y")[0]
+                );
+                
+                await tableInstance.current.setData(updatedTreeData); // 데이터를 새로 설정
+                await setData(updatedTreeData); // React 상태 동기화
+                await tableInstance.current.setPage(currentPage); // 이전 페이지로 이동
+          } catch (error) {
+              console.error("Error occurred while updating rowData on rowClick:", error);
+          }
       });
 
         setTableStatus("ready");
@@ -174,49 +184,46 @@ const OrgSearchPopup = ({ onClose, onConfirm }) => {
     setHasSearched(true);
 
     try {
-      const params = {
-        pGUBUN: filters.searchField || "",
-        pMDATE: filters.mdate || "",
-        pSEARCH: user?.empNo || "",
-        pDEBUG: "F"
-      };
+        const params = {
+          pGUBUN: filters.searchField || "EMPNO",
+          pMDATE: filters.mdate || "",
+          pSEARCH: user?.empNo || "",
+          pDEBUG: "F"
+        };
 
-      const hierarchicalData = convertOrgInfoToHierarchy(orgInfo);
+        const response = await fetchData("common/orginfo/list", params);
+  
+        if (!response.success) {
+          errorMsgPopup(response.message || "데이터를 가져오는 중 오류가 발생했습니다.");
+          setData([]);
+          return;
+        }
+        if (response.errMsg !== "") {
+          setData([]);
+          return;
+        }
+        const responseData = Array.isArray(response.data) ? response.data : [];
+        const hierarchicalData = convertOrgInfoToHierarchy(responseData);
+        let seqCounter = 1;
+        const assignSeq = (nodes) => {
+          return nodes.map((item) => {
+            const newItem = { ...item, seq: seqCounter++, select: "N" };
+            if (item._children && Array.isArray(item._children)) {
+              newItem._children = assignSeq(item._children);
+            }
+            return newItem;
+          });
+        };
 
-      // First attempt: Filter by Mdate and EMPNO
-      let filteredData = await fetchJsonData(hierarchicalData, {
-        MDATE: params.pMDATE,
-        EMPNO: params.pSEARCH
-      });
+        const dataWithSeq = assignSeq(hierarchicalData);
 
-      // If no results, fall back to filtering by Mdate only
-      if (filteredData.length === 0) {
-        filteredData = await fetchJsonData(hierarchicalData, {
-          MDATE: params.pMDATE
-        });
+        setData(dataWithSeq);
+      } catch (err) {
+        errorMsgPopup(err.response?.data?.message || "데이터를 가져오는 중 오류가 발생했습니다.");
+        setData([]);
+      } finally {
+        setLoading(false);
       }
-
-      // Assign seq to all nodes, including children
-      let seqCounter = 1;
-      const assignSeq = (nodes) => {
-        return nodes.map((item) => {
-          const newItem = { ...item, seq: seqCounter++, select: "N" };
-          if (item._children && Array.isArray(item._children)) {
-            newItem._children = assignSeq(item._children);
-          }
-          return newItem;
-        });
-      };
-
-      const dataWithSeq = assignSeq(filteredData);
-
-      setData(dataWithSeq);
-    } catch (err) {
-      errorMsgPopup(err.message || "데이터를 가져오는 중 오류가 발생했습니다.");
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleDynamicEvent = (eventType) => {
@@ -230,8 +237,22 @@ const OrgSearchPopup = ({ onClose, onConfirm }) => {
 
   const handleConfirm = () => {
     if (onConfirm) {
-      const selectedData = data.find((row) => row.select === "Y") || null;
-      onConfirm(selectedData ? [selectedData] : []);
+      // 계층적 데이터에서 select === "Y"인 모든 행을 재귀적으로 수집
+      const collectSelected = (nodes) => {
+        let selected = [];
+        nodes.forEach((node) => {
+          if (node.select === "Y") {
+            selected.push(node);
+          }
+          if (node._children && Array.isArray(node._children)) {
+            selected = [...selected, ...collectSelected(node._children)];
+          }
+        });
+        return selected;
+      };
+
+      const selectedData = collectSelected(data);
+      onConfirm(selectedData); // 선택된 데이터 전달
     }
     handleClose();
   };
