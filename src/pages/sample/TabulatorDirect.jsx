@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { createTable } from '../../utils/tableConfig';
 import { initialFilters } from '../../utils/tableEvent';
 import { handleDownloadExcel } from '../../utils/tableExcel';
+import useStore from '../../store/store';
 import MainSearch from '../../components/main/MainSearch';
 import TableSearch from '../../components/table/TableSearch';
 import CommonPopup from '../../components/popup/CommonPopup';
@@ -68,13 +69,14 @@ const getFieldOptions = (fieldId, dependentValue = '') => {
  * @returns {JSX.Element} 검색 폼과 테이블을 포함한 컴포넌트
  */
 const TabulatorDirect = () => {
+  const { user } = useStore();
   const [showPopup, setShowPopup] = useState(false);
   const [showExcelPopup, setShowExcelPopup] = useState(false); // Add this line
   const [popupTitle, setPopupTitle] = useState('');
   const [excelPopupTitle, setExcelPopupTitle] = useState(''); // Add this line
   const [popupContent, setPopupContent] = useState(null);
   const [popupOnConfirm, setPopupOnConfirm] = useState(null);
-  const [selectedOrg, setSelectedOrg] = useState(''); // 조직 선택 팝업용 상태
+  const [selectedOrg, setSelectedOrg] = useState(user?.orgCd || ''); // 조직 선택 팝업용 상태
   const [status2Options, setStatus2Options] = useState(getFieldOptions('org2'));
   const [status3Options, setStatus3Options] = useState(getFieldOptions('org3'));
   const [_selectedUsers, setSelectedUsers] = useState([]);
@@ -161,7 +163,8 @@ const TabulatorDirect = () => {
     { id: 'filterText', type: 'text', label: '', placeholder: '찾을 내용을 입력하세요', width: 'default', height: 'default', backgroundColor: 'default', color: 'default', enabled: true },
   ];
 
-  const [filters, setFilters] = useState(initialFilters(searchConfig.areas.find((area) => area.type === 'search').fields));
+  // const [filters, setFilters] = useState(initialFilters(searchConfig.areas.find((area) => area.type === 'search').fields));
+  const [filters, setFilters] = useState({...initialFilters(searchConfig.areas.find((area) => area.type === 'search').fields),    orgText: user?.orgNm || '', });
   const [tableFilters, setTableFilters] = useState(initialFilters(filterTableFields));
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
