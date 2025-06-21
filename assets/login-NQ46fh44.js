@@ -1,0 +1,2 @@
+import{f as i,b as c}from"./index-3FJ1wkmh.js";const p=async(t,a,o,r,s)=>{try{const e=await i("auth/login",{empNo:a,empPwd:o});if(e.success)if(e.errMsg!=="")s(e.errMsg);else{if(e.data.user.pwdChgYn==="Y")return e;const{setUser:n}=c.getState();n({...e.data.user,expiresAt:e.data.expiresAt*1e3}),t==="web"?r("/main",{replace:!0}):r("/mobile/main",{replace:!0})}else throw new Error(e.errMsg||"아이디 또는 비밀번호가 잘못되었습니다.")}catch(e){console.error("Login error:",e.message),s(e.message||"로그인에 실패했습니다. 다시 시도해주세요.")}return null};export{p};
+//# sourceMappingURL=login-NQ46fh44.js.map
