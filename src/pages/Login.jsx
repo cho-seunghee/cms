@@ -6,6 +6,7 @@ import Join from '../pages/user/Join';
 import PasswordChange from '../pages/user/PasswordChange';
 import { msgPopup } from '../utils/msgPopup';
 import { errorMsgPopup } from '../utils/errorMsgPopup';
+import LicensePopup from '../components/popup/LicensePopup';
 
 const Login = () => {
   const [empNo, setEmpNo] = useState('admin');
@@ -13,6 +14,7 @@ const Login = () => {
   const [showJoinPopup, setShowJoinPopup] = useState(false);
   const [showPasswordChangePopup, setShowPasswordChangePopup] = useState(false);
   const [isManualPasswordChange, setIsManualPasswordChange] = useState(false);
+  const [showLicensePopup, setShowLicensePopup] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -34,6 +36,10 @@ const Login = () => {
 
   const handleJoinClick = () => {
     setShowJoinPopup(true);
+  };
+
+  const handleLicenseClick = () => {
+    setShowLicensePopup(true);
   };
 
   const handlePasswordChangeClick = () => {
@@ -93,6 +99,13 @@ const Login = () => {
           >
             <i className="bi bi-key"></i>
           </button>
+          <button
+            type="button"
+            className={styles.smallButton}
+            onClick={handleLicenseClick}
+          >
+            <i className="bi bi-info-circle"></i>
+          </button>
         </div>
         <button 
           type="button" 
@@ -108,6 +121,10 @@ const Login = () => {
         onHide={() => setShowPasswordChangePopup(false)} 
         initialEmpNo={empNo} 
         isEditable={isManualPasswordChange}
+      />
+      <LicensePopup
+        show={showLicensePopup}
+        onHide={() => setShowLicensePopup(false)}
       />
     </div>
   );

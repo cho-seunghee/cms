@@ -104,3 +104,9 @@
   .margin1 {
     margin: 1px;
   }
+
+  @media (max-width: 576px) {
+      .modal {
+        width: 100%;
+    }
+  }

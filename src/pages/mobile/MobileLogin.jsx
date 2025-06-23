@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { performLogin } from '../../service/login';
+import LicensePopup from '../../components/popup/LicensePopup';
 import styles from './MobileLogin.module.css';
 
 const MobileLogin = () => {
   const [empNo, setEmpNo] = useState('admin');
   const [empPwd, setEmpPwd] = useState('new1234!');
   const [error, setError] = useState('');
+  const [showLicensePopup, setShowLicensePopup] = useState(false);
   const navigate = useNavigate();
+
+  const handleLicenseClick = () => {
+    setShowLicensePopup(true);
+  };
 
   const handleLogin = async () => {
     setError('');
@@ -42,9 +48,22 @@ const MobileLogin = () => {
             required
           />
         </div>
-        <button type="button" className={styles.button} onClick={handleLogin}>Login</button>
-        {error && <p className={styles.error}>{error}</p>}
+        <div className={styles.buttonGroup}>
+          <button type="button" className={styles.button} onClick={handleLogin}>Login</button>
+          {error && <p className={styles.error}>{error}</p>}
+          <button
+            type="button"
+            className={styles.smallButton}
+            onClick={handleLicenseClick}
+          >
+            <i className="bi bi-info-circle"></i>
+          </button>
+        </div>
       </div>
+      <LicensePopup
+        show={showLicensePopup}
+        onHide={() => setShowLicensePopup(false)}
+      />
     </div>
   );
 };
